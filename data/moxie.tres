@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="CharacterProfile" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/characters/character_profile.gd" id="1_profile"]
+
+[resource]
+script = ExtResource("1_profile")
+display_name = "Moxie"
+tagline = "all elbows, no plan"
+primary_color = Color(0.961, 0.435, 0.38, 1)
+secondary_color = Color(1, 0.82, 0.4, 1)
+accent_color = Color(0.557, 0.941, 0.78, 1)
+face_default = ":]"
+face_love = "<3"
+face_shock = "O_O"
+face_laughter = "xD"
+face_anger = ">:("
+face_confusion = "?"
+face_celebration = "^_^"
+chest_quirk = "HEART"
+quirk_line = "winks before falling"
+visual_style = "moxie"

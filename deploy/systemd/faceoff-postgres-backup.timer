@@ -1,0 +1,10 @@
+[Unit]
+Description=Run the Faceoff Nakama PostgreSQL backup daily
+
+[Timer]
+OnCalendar=*-*-* 03:15:00 UTC
+Persistent=true
+Unit=faceoff-postgres-backup.service
+
+[Install]
+WantedBy=timers.target

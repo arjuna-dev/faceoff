@@ -1,0 +1,11 @@
+logger:
+  level: "INFO"
+session:
+  token_expiry_sec: 7200
+socket:
+  server_key: "devserverkey"
+  port: 7350
+console:
+  port: 7351
+runtime:
+  path: "/nakama/data/modules"

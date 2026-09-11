@@ -1,0 +1,9 @@
+{
+	email {$ACME_EMAIL}
+	admin off
+}
+
+{$NAKAMA_DOMAIN} {
+	encode gzip
+	reverse_proxy nakama:7350
+}

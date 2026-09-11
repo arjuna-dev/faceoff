@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="CharacterProfile" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/characters/character_profile.gd" id="1_profile"]
+
+[resource]
+script = ExtResource("1_profile")
+display_name = "Rivet"
+tagline = "built like a bad idea"
+primary_color = Color(0.403, 0.267, 0.835, 1)
+secondary_color = Color(0.98, 0.8, 0.31, 1)
+accent_color = Color(0.329, 0.847, 0.98, 1)
+face_default = "._."
+face_love = "♥"
+face_shock = ":O"
+face_laughter = "HA!"
+face_anger = "GRR"
+face_confusion = "???"
+face_celebration = "\\o/"
+chest_quirk = "BEEP"
+quirk_line = "makes a tiny error beep"
+visual_style = "rivet"

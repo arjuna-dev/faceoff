@@ -1,0 +1,75 @@
+name: faceoff-dev
+
+services:
+  postgres:
+    image: postgres:16.4
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-nakama}
+      POSTGRES_USER: ${POSTGRES_USER:-nakama}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-local-only-change-me}
+    volumes:
+      - faceoff_postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-nakama} -d ${POSTGRES_DB:-nakama}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks: [faceoff]
+
+  nakama:
+    image: registry.heroiclabs.com/heroiclabs/nakama:3.40.0
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - >-
+        /nakama/nakama migrate up --database.address postgres://${POSTGRES_USER:-nakama}:${POSTGRES_PASSWORD:-local-only-change-me}@postgres:5432/${POSTGRES_DB:-nakama}
+        && exec /nakama/nakama --database.address postgres://${POSTGRES_USER:-nakama}:${POSTGRES_PASSWORD:-local-only-change-me}@postgres:5432/${POSTGRES_DB:-nakama}
+        --config /nakama/data/local.yml --socket.server_key ${NAKAMA_SERVER_KEY:-devserverkey}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "${NAKAMA_PORT:-7350}:7350"
+      - "${NAKAMA_CONSOLE_PORT:-7351}:7351"
+    volumes:
+      - ./nakama:/nakama/data:ro
+    healthcheck:
+      test: ["CMD-SHELL", "kill -0 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    networks: [faceoff]
+
+  livekit:
+    image: livekit/livekit-server:v1.13.3
+    command: ["--config", "/etc/livekit/livekit.yaml"]
+    ports:
+      - "7880:7880"
+      - "7881:7881"
+      - "7882:7882/udp"
+    volumes:
+      - ./livekit/livekit.yaml:/etc/livekit/livekit.yaml:ro
+    healthcheck:
+      test: ["CMD-SHELL", "kill -0 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    networks: [faceoff]
+
+  combat_server:
+    build:
+      context: .
+      dockerfile: docker/combat_server.Dockerfile
+    environment:
+      FACE_OFF_SERVER_PORT: 9100
+    volumes:
+      - .:/workspace:ro
+    command: ["godot", "--headless", "--path", "/workspace", "--script", "res://server/headless_server.gd"]
+    profiles: [server]
+    networks: [faceoff]
+
+volumes:
+  faceoff_postgres:
+
+networks:
+  faceoff:
+    name: faceoff-dev-network

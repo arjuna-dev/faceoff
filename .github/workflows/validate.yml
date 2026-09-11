@@ -1,0 +1,21 @@
+name: Validate Faceoff
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  godot:
+    runs-on: ubuntu-latest
+    container: barichello/godot-ci:4.3
+    steps:
+      - uses: actions/checkout@v4
+      - name: Parse project
+        run: godot --headless --path . --editor --quit
+      - name: Run core tests
+        run: godot --headless --path . -s tests/test_core.gd
+      - name: Run gameplay tests
+        run: |
+          godot --headless --path . -s tests/test_puppet_smoke.gd
+          godot --headless --path . -s tests/test_fighter_balance.gd
+          godot --headless --path . -s tests/test_combat_v3.gd

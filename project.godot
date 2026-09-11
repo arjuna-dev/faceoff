@@ -1,0 +1,61 @@
+; Faceoff - manual 2D arcade combat.
+; Godot 4.3 stable. Rendering is deliberately low-resolution and nearest-filtered.
+config_version=5
+
+[application]
+
+config/name="Faceoff"
+config/icon="res://assets/faceoff_icon.svg"
+run/main_scene="res://scenes/main.tscn"
+config/features=PackedStringArray("4.3", "GL Compatibility")
+
+[autoload]
+
+Nakama="*res://addons/com.heroiclabs.nakama/Nakama.gd"
+
+[faceoff]
+
+online_endpoint=""
+online_server_key=""
+
+[display]
+
+window/size/viewport_width=960
+window/size/viewport_height=540
+window/size/window_width_override=1280
+window/size/window_height_override=720
+window/stretch/mode="canvas_items"
+window/handheld/orientation=0
+
+[input]
+
+move_left={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"physical_keycode":65,"unicode":97), Object(InputEventJoypadMotion,"axis":0,"axis_value":-1.0)]
+}
+move_right={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"physical_keycode":68,"unicode":100), Object(InputEventJoypadMotion,"axis":0,"axis_value":1.0)]
+}
+[input_devices]
+
+pointing/emulate_touch_from_mouse=false
+pointing/emulate_mouse_from_touch=false
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+textures/default_filters/use_nearest_mipmap_filter=false
+textures/canvas_textures/default_texture_filter=0
+textures/vram_compression/import_etc2_astc=true
+textures/vram_compression/import_s3tc_bptc=true
+environment/defaults/default_clear_color=Color(0.035, 0.027, 0.09, 1)
+
+[physics]
+
+common/physics_ticks_per_second=60
+
+[audio]
+
+driver/enable_input=true

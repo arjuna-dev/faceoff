@@ -1,0 +1,54 @@
+name: Android release
+
+on:
+  workflow_dispatch:
+    inputs:
+      nakama_endpoint:
+        description: "Production Nakama endpoint, for example nakamas://play.example.com"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    container: barichello/godot-ci:4.3
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Restore upload keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.FACEOFF_UPLOAD_KEYSTORE_BASE64 }}
+          KEY_ALIAS: ${{ secrets.FACEOFF_UPLOAD_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.FACEOFF_UPLOAD_KEY_PASSWORD }}
+        run: |
+          test -n "$KEYSTORE_BASE64"
+          test -n "$KEY_ALIAS"
+          test -n "$KEY_PASSWORD"
+          mkdir -p keystores
+          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > keystores/faceoff-upload.keystore
+          chmod 600 keystores/faceoff-upload.keystore
+          cat > keystores/faceoff-upload.env <<EOF_ENV
+          FACE_OFF_RELEASE_KEYSTORE=keystores/faceoff-upload.keystore
+          FACE_OFF_RELEASE_KEY_ALIAS=$KEY_ALIAS
+          FACE_OFF_RELEASE_PASSWORD=$KEY_PASSWORD
+          EOF_ENV
+          chmod 600 keystores/faceoff-upload.env
+
+      - name: Build signed Android App Bundle
+        env:
+          NAKAMA_SERVER_KEY: ${{ secrets.FACEOFF_NAKAMA_SERVER_KEY }}
+        run: |
+          test -n "$NAKAMA_SERVER_KEY"
+          ./tools/export_android_release.sh --aab-only --endpoint "${{ inputs.nakama_endpoint }}" --server-key "$NAKAMA_SERVER_KEY"
+
+      - name: Upload signed bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: faceoff-android-release
+          path: exports/Faceoff-release.aab
+          if-no-files-found: error
+          retention-days: 14

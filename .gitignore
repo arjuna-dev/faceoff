@@ -1,0 +1,17 @@
+.godot/
+.DS_Store
+*.tmp
+*.log
+builds/
+exports/
+.env
+.env.production
+.env.production.*
+!.env.production.example
+backups/
+keystores/*.keystore
+keystores/*.p12
+keystores/*.env
+keystores/*.txt
+.godot/export_credentials.cfg
+android/

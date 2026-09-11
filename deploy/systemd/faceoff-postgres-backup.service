@@ -1,0 +1,9 @@
+[Unit]
+Description=Faceoff Nakama PostgreSQL backup
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/faceoff
+ExecStart=/opt/faceoff/tools/backup_nakama_postgres.sh

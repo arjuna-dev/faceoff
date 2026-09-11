@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="CharacterProfile" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/characters/character_profile.gd" id="1_profile"]
+
+[resource]
+script = ExtResource("1_profile")
+display_name = "Batyr"
+tagline = "Tatar warrior, iron resolve"
+primary_color = Color(0.12, 0.29, 0.28, 1)
+secondary_color = Color(0.48, 0.14, 0.12, 1)
+accent_color = Color(0.91, 0.59, 0.2, 1)
+face_default = ":|"
+face_love = "<3"
+face_shock = "O_O"
+face_laughter = "HA!"
+face_anger = ">:["
+face_confusion = "?"
+face_celebration = "\o/"
+chest_quirk = "BOOM"
+quirk_line = "stomps before thinking"
+visual_style = "batyr"
