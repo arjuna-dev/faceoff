@@ -8,6 +8,7 @@ config/name="Faceoff"
 config/icon="res://assets/faceoff_icon.svg"
 run/main_scene="res://scenes/main.tscn"
 config/features=PackedStringArray("4.3", "GL Compatibility")
+config/quit_on_go_back=false
 
 [autoload]
 
@@ -15,8 +16,9 @@ Nakama="*res://addons/com.heroiclabs.nakama/Nakama.gd"
 
 [faceoff]
 
-online_endpoint=""
-online_server_key=""
+online_endpoint="nakamas://2-56-96-171.sslip.io"
+online_server_key="5817c4b7ce86507a9cbf2a8488e7aff5d5b0b197fd0fa56d3f7a0104f4e598d4"
+invite_download_url=""
 
 [display]
 
@@ -25,7 +27,9 @@ window/size/viewport_height=540
 window/size/window_width_override=1280
 window/size/window_height_override=720
 window/stretch/mode="canvas_items"
-window/handheld/orientation=0
+; Navigation screens run in portrait. Main switches to landscape for the arena.
+; SCREEN_SENSOR (6) lets the runtime request either orientation on Android.
+window/handheld/orientation=6
 
 [input]
 
@@ -40,7 +44,9 @@ move_right={
 [input_devices]
 
 pointing/emulate_touch_from_mouse=false
-pointing/emulate_mouse_from_touch=false
+; Android UI controls receive taps through the normal Godot mouse path. Native
+; screen touch events remain available to the fighter multi-touch handlers.
+pointing/emulate_mouse_from_touch=true
 
 [rendering]
 

@@ -3,6 +3,7 @@ set -euo pipefail
 
 project_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 godot_bin="${GODOT_BIN:-godot}"
+godot_android_version="${GODOT_ANDROID_RUNTIME_VERSION:-4.5.2}"
 release_env="${FACE_OFF_RELEASE_ENV_FILE:-${project_root}/keystores/faceoff-upload.env}"
 mode="both"
 export_dir="${FACE_OFF_EXPORT_DIR:-${project_root}/exports}"
@@ -56,6 +57,25 @@ while [[ $# -gt 0 ]]; do
             ;;
     esac
 done
+
+godot_version_output=""
+if ! godot_version_output="$("$godot_bin" --version 2>&1)"; then
+    echo "Unable to run the Godot editor at '$godot_bin'." >&2
+    echo "$godot_version_output" >&2
+    exit 1
+fi
+godot_binary_version="$(printf '%s\n' "$godot_version_output" | awk 'NR == 1 { split($1, parts, /\./); if (parts[3] ~ /^[0-9]+$/) print parts[1] "." parts[2] "." parts[3]; else print parts[1] "." parts[2] }')"
+if [[ "$godot_binary_version" != "$godot_android_version" ]]; then
+    echo "Godot ${godot_android_version} is required for Android 16 KB exports; found ${godot_binary_version:-unknown}." >&2
+    echo "Set GODOT_BIN to the matching Godot ${godot_android_version} editor." >&2
+    matching_editor="/Applications/Godot-${godot_android_version}.app/Contents/MacOS/Godot"
+    if [[ -x "$matching_editor" ]]; then
+        echo "A matching editor was found at '$matching_editor'." >&2
+    fi
+    exit 1
+fi
+export GODOT_ANDROID_TEMPLATE_VERSION="$godot_android_version"
+export FACEOFF_ANDROID_ABIS="${FACEOFF_ANDROID_ABIS:-arm64-v8a}"
 
 is_jdk17() {
     [[ -x "$1/bin/java" ]] && "$1/bin/java" -version 2>&1 | grep -Eq 'version "17([.\"])'
@@ -135,19 +155,71 @@ export GODOT_ANDROID_KEYSTORE_RELEASE_USER="$FACE_OFF_RELEASE_KEY_ALIAS"
 export GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD="$FACE_OFF_RELEASE_PASSWORD"
 
 mkdir -p "$export_dir"
+export_dir="$(cd "$export_dir" && pwd)"
 cd "$project_root"
+"${project_root}/tools/prepare_android.sh"
+
+sdk_root="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-}}"
+if [[ -z "$sdk_root" && -d "$(cd ~ && pwd)/Library/Android/sdk" ]]; then
+    sdk_root="$(cd ~ && pwd)/Library/Android/sdk"
+fi
+if [[ -z "$sdk_root" || ! -d "$sdk_root" ]]; then
+    echo "Android SDK is required for the final Gradle packaging step." >&2
+    exit 1
+fi
+export ANDROID_SDK_ROOT="$sdk_root"
+export ANDROID_HOME="$sdk_root"
+
+package_release_artifact() {
+    local output_path="$1"
+    local assemble_task="$2"
+    local output_dir="$(cd "$(dirname "$output_path")" && pwd)"
+    local output_file="$(basename "$output_path")"
+    local export_format="apk"
+    if [[ "$assemble_task" == "bundleStandardRelease" ]]; then
+        export_format="aab"
+    fi
+    local gradle_props=(
+        "-Pexport_package_name=com.faceoff.arcade"
+        "-Pexport_version_code=1"
+        "-Pexport_version_name=0.1.0"
+        "-Pexport_version_min_sdk=24"
+        "-Pgodot_editor_version=${godot_android_version}.stable"
+        "-Pexport_edition=standard"
+        "-Pexport_build_type=release"
+        "-Pexport_format=$export_format"
+        "-Pexport_enabled_abis=arm64-v8a"
+        "-Pexport_path=$output_dir"
+        "-Pexport_filename=$output_file"
+        "-Pperform_signing=true"
+        "-Pperform_zipalign=true"
+        "-Prelease_keystore_file=$keystore_path"
+        "-Prelease_keystore_alias=$FACE_OFF_RELEASE_KEY_ALIAS"
+        "-Prelease_keystore_password=$FACE_OFF_RELEASE_PASSWORD"
+    )
+    "${project_root}/tools/patch_android_invite_manifest.sh" release
+    "${project_root}/android/build/gradlew" -p "${project_root}/android/build" "$assemble_task" --no-daemon "${gradle_props[@]}"
+    "${project_root}/android/build/gradlew" -p "${project_root}/android/build" copyAndRenameBinary --no-daemon "${gradle_props[@]}"
+    if [[ "$export_format" == "apk" ]]; then
+        "${project_root}/tools/package_android_apk_16kb.sh" "$output_path" \
+            --keystore "$keystore_path" \
+            --alias "$FACE_OFF_RELEASE_KEY_ALIAS" \
+            --password "$FACE_OFF_RELEASE_PASSWORD"
+    else
+        "${project_root}/tools/verify_android_16kb.sh" "$output_path"
+    fi
+}
+
 if [[ "$mode" == "apk" || "$mode" == "both" ]]; then
     apk_path="${export_dir}/Faceoff-release.apk"
     "$godot_bin" --headless --path . --export-release "Android Release APK" "$apk_path"
-    sdk_root="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-}}"
-    if [[ -n "$sdk_root" ]]; then
-        for build_tools in "$sdk_root"/build-tools/*; do
-            if [[ -x "$build_tools/apksigner" ]]; then
-                "$build_tools/apksigner" verify "$apk_path"
-                break
-            fi
-        done
-    fi
+    package_release_artifact "$apk_path" assembleStandardRelease
+    for build_tools in "$sdk_root"/build-tools/*; do
+        if [[ -x "$build_tools/apksigner" ]]; then
+            "$build_tools/apksigner" verify "$apk_path"
+            break
+        fi
+    done
     echo "Android release APK: $apk_path"
 fi
 if [[ "$mode" == "aab" || "$mode" == "both" ]]; then
@@ -157,6 +229,7 @@ if [[ "$mode" == "aab" || "$mode" == "both" ]]; then
     else
         "$godot_bin" --headless --path . --export-release "Android Release AAB" "$aab_path"
     fi
+    package_release_artifact "$aab_path" bundleStandardRelease
     jarsigner_bin="${JAVA_HOME}/bin/jarsigner"
     if [[ -x "$jarsigner_bin" ]]; then
         "$jarsigner_bin" -verify "$aab_path" >/dev/null 2>&1

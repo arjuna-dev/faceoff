@@ -7,6 +7,8 @@ var elapsed := 0.0
 var sent_hit := false
 var saw_state := false
 var saw_hit := false
+var saw_fighter_selection := false
+var sent_fighter_selection := false
 var requested_url := "ws://127.0.0.1:9100"
 var probe_label := "probe"
 var duration := 8.0
@@ -32,11 +34,15 @@ func _run() -> void:
 	online.slot_assigned.connect(func(slot: int): print("%s slot=%d" % [probe_label, slot]))
 	online.remote_state_received.connect(_on_remote_state)
 	online.remote_hit_received.connect(_on_remote_hit)
+	online.remote_fighter_selected.connect(_on_remote_fighter_selected)
 	online.connect_to_server(requested_url)
 	while elapsed < duration:
 		elapsed += 0.05
 		if online and online.player_slot > 0:
 			var slot := online.player_slot
+			if not sent_fighter_selection:
+				sent_fighter_selection = true
+				online.submit_fighter_selection("jade" if slot == 1 else "oculon")
 			online.submit_state({
 				"position": Vector2(280.0 + slot * 40.0, 420.0),
 				"movement": Vector2.RIGHT if slot == 1 else Vector2.LEFT,
@@ -47,7 +53,7 @@ func _run() -> void:
 				sent_hit = true
 				online.submit_hit(2, 1.0, 100.0, "right_forearm", Vector2.ZERO)
 		await create_timer(0.05).timeout
-	print("%s result state=%s hit=%s" % [probe_label, saw_state, saw_hit])
+	print("%s result selection=%s state=%s hit=%s" % [probe_label, saw_fighter_selection, saw_state, saw_hit])
 	quit(0 if saw_state or probe_label == "one" else 1)
 
 func _on_remote_state(_slot: int, _state: Dictionary) -> void:
@@ -55,3 +61,6 @@ func _on_remote_state(_slot: int, _state: Dictionary) -> void:
 
 func _on_remote_hit(_attacker_slot: int, _damage: float, _speed: float, _region: String, _point: Vector2, _blocked: bool, _impact_damage: float) -> void:
 	saw_hit = true
+
+func _on_remote_fighter_selected(_slot: int, _fighter_id: String) -> void:
+	saw_fighter_selection = true

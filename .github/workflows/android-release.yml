@@ -14,7 +14,7 @@ permissions:
 jobs:
   release:
     runs-on: ubuntu-latest
-    container: barichello/godot-ci:4.3
+    container: barichello/godot-ci:4.5.2
     steps:
       - name: Check out source
         uses: actions/checkout@v4

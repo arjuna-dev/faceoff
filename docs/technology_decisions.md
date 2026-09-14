@@ -11,6 +11,9 @@ Date: 2026-07-17
 - PostgreSQL **16.4** for local Nakama development.
 - LiveKit Server **v1.13.3** as the local media-service target. The project currently ships the shared `MediaRoom` API plus `MockMediaRoom`; no native LiveKit GDExtension is claimed as working yet.
 - MediaPipe Face Landmarker (adapter not bundled in this milestone). `FaceTracker` defines the largest-face selection, smoothing, grace-period fallback, and approved-expression boundary that a native adapter must call.
+- Contacts, conversations, call signaling, and call history are part of the product boundary. Nakama is the planned system of record for those social events, while the fighter room remains the shared call surface.
+- Video face replacement is local presentation state. A processed face texture can be applied to the fighter head and published as a media track, but raw camera frames and landmarks never enter Nakama.
+- `FaceTextureProcessor` and `VideoFaceController` provide the SDK-independent crop, texture, grace-period, and fighter/media handoff contract for that future native adapter.
 
 ## Why the physics model is local-first
 

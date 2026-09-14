@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="CharacterProfile" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/characters/character_profile.gd" id="1_profile"]
+
+[resource]
+script = ExtResource("1_profile")
+display_name = "Oculon"
+tagline = "one eye on the finish"
+primary_color = Color(0.08, 0.39, 0.23, 1)
+secondary_color = Color(0.95, 0.66, 0.38, 1)
+accent_color = Color(1, 0.79, 0.12, 1)
+face_default = "O"
+face_love = "<3"
+face_shock = "O_O"
+face_laughter = "HA!"
+face_anger = ">:O"
+face_confusion = "?"
+face_celebration = "★"
+chest_quirk = "LOCK"
+quirk_line = "never blinks first"
+visual_style = "oculon"

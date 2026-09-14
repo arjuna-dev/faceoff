@@ -17,7 +17,7 @@ const DEFAULT_CLIENT_SCHEME : String = "http"
 const DEFAULT_SOCKET_SCHEME : String = "ws"
 
 ## The default log level for the Nakama logger.
-const DEFAULT_LOG_LEVEL = NakamaLogger.LOG_LEVEL.DEBUG
+const DEFAULT_LOG_LEVEL = NakamaLogger.LOG_LEVEL.ERROR
 
 ## The path where the generated device identifier is persisted.
 const DEVICE_ID_PATH : String = "user://nakama_device_id"

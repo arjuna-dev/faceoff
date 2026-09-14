@@ -27,6 +27,11 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    environment:
+      TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID:-}
+      TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN:-}
+      TWILIO_VERIFY_SERVICE_SID: ${TWILIO_VERIFY_SERVICE_SID:-}
+      TWILIO_VERIFY_CHANNEL: ${TWILIO_VERIFY_CHANNEL:-sms}
     ports:
       - "${NAKAMA_PORT:-7350}:7350"
       - "${NAKAMA_CONSOLE_PORT:-7351}:7351"

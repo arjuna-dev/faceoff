@@ -26,6 +26,8 @@ func _run() -> void:
 	var main := MainScene.instantiate()
 	root.add_child(main)
 	await process_frame
+	main._on_demo_requested()
+	main._on_fighter_selection_confirmed("batyr", "kiro")
 	for fighter in [main.player, main.opponent]:
 		main._reset()
 		# Both mirrored rigs bend toward the front in idle, crouch and walking.

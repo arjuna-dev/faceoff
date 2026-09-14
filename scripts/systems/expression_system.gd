@@ -31,6 +31,14 @@ func set_video_face_active(enabled: bool) -> void:
 	if face_node and face_node.has_method("set_video_face_active"):
 		face_node.set_video_face_active(enabled)
 
+func set_video_face_texture(texture: Texture2D) -> void:
+	if face_node and face_node.has_method("set_video_face_texture"):
+		face_node.set_video_face_texture(texture)
+
+func clear_video_face_texture() -> void:
+	if face_node and face_node.has_method("clear_video_face_texture"):
+		face_node.clear_video_face_texture()
+
 func _process(delta: float) -> void:
 	if time_left > 0.0:
 		time_left -= delta

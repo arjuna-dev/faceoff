@@ -1,56 +1,7 @@
 class_name PuppetSegment2D
 extends Node2D
 
-const FIGHTER_ASSETS := {
-	"batyr": {
-		"head": preload("res://assets/fighters/batyr/head.png"),
-		"torso": preload("res://assets/fighters/batyr/torso.png"),
-		"left_upper_arm": preload("res://assets/fighters/batyr/left_upper_arm.png"),
-		"left_forearm": preload("res://assets/fighters/batyr/left_forearm.png"),
-		"right_upper_arm": preload("res://assets/fighters/batyr/right_upper_arm.png"),
-		"right_forearm": preload("res://assets/fighters/batyr/right_forearm.png"),
-		"left_thigh": preload("res://assets/fighters/batyr/left_thigh.png"),
-		"left_shin": preload("res://assets/fighters/batyr/left_shin.png"),
-		"right_thigh": preload("res://assets/fighters/batyr/right_thigh.png"),
-		"right_shin": preload("res://assets/fighters/batyr/right_shin.png"),
-	},
-	"kiro": {
-		"head": preload("res://assets/fighters/kiro/head.png"),
-		"torso": preload("res://assets/fighters/kiro/torso.png"),
-		"left_upper_arm": preload("res://assets/fighters/kiro/left_upper_arm.png"),
-		"left_forearm": preload("res://assets/fighters/kiro/left_forearm.png"),
-		"right_upper_arm": preload("res://assets/fighters/kiro/right_upper_arm.png"),
-		"right_forearm": preload("res://assets/fighters/kiro/right_forearm.png"),
-		"left_thigh": preload("res://assets/fighters/kiro/left_thigh.png"),
-		"left_shin": preload("res://assets/fighters/kiro/left_shin.png"),
-		"right_thigh": preload("res://assets/fighters/kiro/right_thigh.png"),
-		"right_shin": preload("res://assets/fighters/kiro/right_shin.png"),
-	},
-	"moxie": {
-		"head": preload("res://assets/fighters/moxie/head.png"),
-		"torso": preload("res://assets/fighters/moxie/torso.png"),
-		"left_upper_arm": preload("res://assets/fighters/moxie/left_upper_arm.png"),
-		"left_forearm": preload("res://assets/fighters/moxie/left_forearm.png"),
-		"right_upper_arm": preload("res://assets/fighters/moxie/right_upper_arm.png"),
-		"right_forearm": preload("res://assets/fighters/moxie/right_forearm.png"),
-		"left_thigh": preload("res://assets/fighters/moxie/left_thigh.png"),
-		"left_shin": preload("res://assets/fighters/moxie/left_shin.png"),
-		"right_thigh": preload("res://assets/fighters/moxie/right_thigh.png"),
-		"right_shin": preload("res://assets/fighters/moxie/right_shin.png"),
-	},
-	"rivet": {
-		"head": preload("res://assets/fighters/rivet/head.png"),
-		"torso": preload("res://assets/fighters/rivet/torso.png"),
-		"left_upper_arm": preload("res://assets/fighters/rivet/left_upper_arm.png"),
-		"left_forearm": preload("res://assets/fighters/rivet/left_forearm.png"),
-		"right_upper_arm": preload("res://assets/fighters/rivet/right_upper_arm.png"),
-		"right_forearm": preload("res://assets/fighters/rivet/right_forearm.png"),
-		"left_thigh": preload("res://assets/fighters/rivet/left_thigh.png"),
-		"left_shin": preload("res://assets/fighters/rivet/left_shin.png"),
-		"right_thigh": preload("res://assets/fighters/rivet/right_thigh.png"),
-		"right_shin": preload("res://assets/fighters/rivet/right_shin.png"),
-	},
-}
+const FIGHTER_ASSETS := {}
 
 var segment_name := "limb"
 var segment_size := Vector2(20, 60)
@@ -64,6 +15,7 @@ var quirk_text := ""
 var face_color := Color.WHITE
 var chest_color := Color.WHITE
 var video_face_active := false
+var video_face_texture: Texture2D
 var asset_texture: Texture2D
 var walk_active := false
 var walk_phase := 0.0
@@ -102,6 +54,19 @@ func set_quirk(value: String, color: Color = Color.WHITE) -> void:
 
 func set_video_face_active(enabled: bool) -> void:
 	video_face_active = enabled
+	queue_redraw()
+
+func set_video_face_texture(texture: Texture2D) -> void:
+	# The native camera adapter supplies a small, already processed face texture.
+	# Keeping this as a Texture2D avoids coupling the character rig to a camera
+	# or a particular face-tracking SDK.
+	video_face_texture = texture
+	video_face_active = texture != null
+	queue_redraw()
+
+func clear_video_face_texture() -> void:
+	video_face_texture = null
+	video_face_active = false
 	queue_redraw()
 
 func set_walk_state(enabled: bool, phase: float) -> void:
@@ -163,7 +128,13 @@ func _draw_head(half: Vector2, outline: Color) -> void:
 	var radius := minf(half.x, half.y) - 2.0
 	if video_face_active:
 		draw_circle(Vector2(0, 0), radius + 4, outline)
-		draw_circle(Vector2(0, 0), radius, Color("#5de2d1"))
+		if video_face_texture:
+			# Face textures are cropped and masked by the media adapter before they
+			# arrive here. The outline keeps the sprite readable at pixel scale.
+			var face_rect := Rect2(Vector2(-radius, -radius), Vector2.ONE * radius * 2.0)
+			draw_texture_rect(video_face_texture, face_rect, false)
+		else:
+			draw_circle(Vector2(0, 0), radius, Color("#5de2d1"))
 		draw_arc(Vector2(0, 0), radius - 4, 0.0, TAU, 12, Color("#e7fff5"), 2.0)
 	else:
 		draw_circle(Vector2(0, 0), radius + 4, outline)
@@ -183,7 +154,7 @@ func _draw_head(half: Vector2, outline: Color) -> void:
 			]), primary_color)
 			draw_rect(Rect2(-radius * 0.82, -radius * 0.18, radius * 1.64, 13.0), accent_color)
 			draw_line(Vector2(-radius * 0.56, -radius * 0.5), Vector2(radius * 0.56, -radius * 0.5), accent_color, 3.0)
-	var text := "VIDEO" if video_face_active else face_text
+	var text := "VIDEO" if video_face_active and not video_face_texture else face_text
 	_draw_centered_text(text, Vector2(-half.x, -5), segment_size.x, 13, face_color)
 
 func _draw_torso(half: Vector2, outline: Color) -> void:

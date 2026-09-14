@@ -1,6 +1,6 @@
 # Android release and Google Play signing
 
-The project has separate signed release presets for an APK and an Android App Bundle (AAB). The AAB preset uses a Gradle build, which is the format required for new Google Play uploads.
+The project has separate signed release presets for an APK and an Android App Bundle (AAB). All Android presets use the Gradle template so the `FaceoffContacts` bridge and its opt-in Contacts and microphone permissions are included. Camera permission is intentionally absent until face replacement is implemented. The AAB preset uses a Gradle build, which is the format required for new Google Play uploads.
 
 ## Create the upload key
 
@@ -35,10 +35,12 @@ The setting can still be changed in the online field during testing. The `nakama
 
 ## Build release artifacts
 
-Godot 4.3, its Android export templates, the Android SDK, and JDK 17 are required:
+Godot 4.5.2, its matching Android export templates, the Android SDK, an installed Android NDK, and JDK 17 are required. The editor and native Godot Android runtime must use the same version. The export scripts reject mixed versions because they can pass static checks and still crash at runtime.
+
+On macOS, with the Godot 4.5.2 app installed as `/Applications/Godot-4.5.2.app`, run:
 
 ```bash
-./tools/export_android_release.sh
+GODOT_BIN=/Applications/Godot-4.5.2.app/Contents/MacOS/Godot ./tools/export_android_release.sh
 ```
 
 The outputs are:
@@ -46,8 +48,9 @@ The outputs are:
 - `exports/Faceoff-release.apk` for direct device testing
 - `exports/Faceoff-release.aab` for Google Play
 
-The script injects the ignored keystore credentials through Godot's release export environment variables, verifies the APK with `apksigner`, and verifies the AAB signature with `jarsigner`.
-If the Gradle template is not present in the project, the script installs Godot's matching Android build template automatically before the AAB export.
+The script injects the ignored keystore credentials through Godot's release export environment variables, reapplies the `faceoff://invite` activity filter after Godot regenerates its variant manifest, packages native libraries on 16 KB boundaries, and verifies the APK with `apksigner`. It verifies the AAB's native ELF alignment with `tools/verify_android_16kb.sh` and its signature with `jarsigner`.
+If the Gradle template is not present in the project, run `tools/prepare_android.sh` with Godot's matching `android_source.zip` available. The script caches the official Godot 4.5.2 runtime and refuses a checksum mismatch.
+The checked-in export presets target arm64 only. `prepare_android.sh` keeps the verified full runtime as the source cache and derives an arm64-only AAR for Gradle, which avoids expanding unused ABI libraries on machines with limited free space.
 
 ## Google Play setup
 
@@ -70,3 +73,21 @@ base64 < keystores/faceoff-upload.keystore | tr -d '\n'
 ```
 
 Google Play signing is an account-level operation and cannot be completed from this repository without access to the Play Console account. The generated file is an upload key, not a copy of Google's protected app signing key.
+
+### Native social bridge
+
+Custom source files live in `platform/android/`. Both export scripts run
+`tools/prepare_android.sh` to copy the bridge, manifest, restricted APK-sharing
+FileProvider and XML paths into Godot's generated Android build directory.
+The generated `android/` directory is not the source of truth. Install Godot 4.5.2
+export templates for a clean checkout, or point `GODOT_ANDROID_SOURCE` at its
+`android_source.zip`.
+
+The debug APK intentionally remains debuggable and can show Android's separate
+debuggable-app notice. The release APK is non-debuggable and is the appropriate
+artifact to send to a tester who should not see that notice. Both artifacts are
+checked for 16 KB ELF and, for APKs, ZIP alignment.
+
+The APK declares INTERNET, READ_CONTACTS and RECORD_AUDIO only. Face video is
+not enabled and CAMERA permission is absent. Phone authentication and real
+invitations also require the server rollout described in [social_play.md](social_play.md).

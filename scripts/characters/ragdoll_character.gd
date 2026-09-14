@@ -39,6 +39,8 @@ var was_walking := false
 var hit_flash := 0.0
 var hit_point := Vector2.ZERO
 var hit_damage := 0
+var video_face_active := false
+var video_face_texture: Texture2D
 var spawn_position := Vector2.ZERO
 var joints: Dictionary = {}
 var pose_name := "guard"
@@ -50,6 +52,9 @@ const FALL_DURATION := 1.8
 const PIXEL_SIZE := 1.0
 const LEG_LENGTH := 64.0
 const FOOT_REACH := 127.0
+const ARM_UPPER_LENGTH := 48.0
+const ARM_FOREARM_LENGTH := 50.0
+const ARM_REACH := 97.0
 const HOP_THRESHOLD := 52.0
 const HOP_MOVE_SPEED := 320.0
 const HOP_RISK_CUTOFF := 16.0
@@ -89,6 +94,20 @@ func return_to_guard() -> void:
 	head_drop = 0.0
 	stance_height = 0.0
 	_solve_pose()
+
+func set_video_face_active(enabled: bool) -> void:
+	video_face_active = enabled
+	queue_redraw()
+
+func set_video_face_texture(texture: Texture2D) -> void:
+	video_face_texture = texture
+	video_face_active = texture != null
+	queue_redraw()
+
+func clear_video_face_texture() -> void:
+	video_face_texture = null
+	video_face_active = false
+	queue_redraw()
 
 func _update_support(delta: float) -> void:
 	if is_ko or is_jumping or hopping:
@@ -233,6 +252,11 @@ func setup(p_profile: CharacterProfile, index: int, facing: float, _lane: int = 
 		bodies[limb] = marker
 	_solve_pose()
 
+func set_profile(p_profile: CharacterProfile) -> void:
+	profile = p_profile
+	return_to_guard()
+	queue_redraw()
+
 func _update_guard_recovery(delta: float) -> void:
 	for limb in guard_strain.keys():
 		guard_strain[limb] = maxf(0.0, float(guard_strain[limb]) - delta * 9.0)
@@ -324,13 +348,20 @@ func _solve_pose() -> void:
 		joints[side + "_hip"] = leg_root
 		joints[side + "_knee"] = knee
 		joints[side + "_foot"] = foot
-		var arm_root := shoulder + Vector2(14 if front else -23, 6 if front else 0) if profile.visual_style == "batyr" else shoulder + Vector2(7 if front else -14, 6 if front else 0)
+		var arm_root := shoulder + ArcadeSkinType.arm_root_offset(profile.visual_style, side)
 		var guard_beat := floorf(sin(animation_time * 5.0 + (0.0 if front else 0.8)) * 1.5) * 2.0
-		var hand := shoulder + Vector2((50 if front else 22) + guard_beat, (-9 if front else -27) - guard_beat)
+		# Keep both gloves clear of the torso so either touch target stays usable.
+		# Both arms use a real two-segment elbow solve.
+		var guard_offset := ArcadeSkinType.guard_offset(profile.visual_style, front, guard_beat)
+		var hand := shoulder + guard_offset
 		if held_targets.has(side + "_forearm"):
-			hand = arm_root + Vector2(held_targets[side + "_forearm"]).limit_length(87)
+			hand = arm_root + Vector2(held_targets[side + "_forearm"]).limit_length(ARM_REACH)
 		hand += Vector2(lean * 0.28, head_drop * 0.22)
-		var elbow := _bend(arm_root, hand, 45, 44, -1.0)
+		# Rig-first Jade and Oculon sources hang their separated arms downward, so
+		# their elbows fold below the hand line. The original atlas was authored for
+		# the opposite bend and keeps that established deformation direction.
+		var elbow_direction := 1.0 if profile.visual_style in ["jade", "oculon"] else -1.0
+		var elbow := _bend(arm_root, hand, ARM_UPPER_LENGTH, ARM_FOREARM_LENGTH, elbow_direction)
 		joints[side + "_shoulder"] = arm_root
 		joints[side + "_elbow"] = elbow
 		joints[side + "_hand"] = hand
@@ -355,12 +386,12 @@ func _set_marker(limb: String, point: Vector2) -> void:
 func _input(event: InputEvent) -> void:
 	if not input_enabled or is_ko or is_fallen:
 		return
-	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+	if event is InputEventMouseButton and not OS.has_feature("mobile") and event.button_index == MOUSE_BUTTON_LEFT:
 		if event.pressed:
 			_start_pointer_drag_at(get_global_mouse_position(), -1)
 		else:
 			_end_pointer_drag(-1)
-	elif event is InputEventMouseMotion:
+	elif event is InputEventMouseMotion and not OS.has_feature("mobile"):
 		_update_pointer_drag(-1, get_global_mouse_position())
 	elif event is InputEventScreenTouch:
 		if event.pressed:
@@ -375,7 +406,7 @@ func _pick_limb_at(point: Vector2) -> String:
 	var score := INF
 	for limb in LIMBS:
 		var distance: float = bodies[limb].global_position.distance_to(point)
-		var radius := 26.0 if limb == "torso" else 20.0
+		var radius := 26.0 if limb == "torso" else (28.0 if limb == "left_forearm" else 20.0)
 		if distance < radius and distance < score:
 			best = limb
 			score = distance
@@ -433,7 +464,7 @@ func _update_pointer_drag(id: int, point: Vector2, sample_seconds: float = -1.0)
 			held_targets.erase(side + "_shin")
 		elif drag.limb.ends_with("shin"):
 			held_targets.erase(side + "_thigh")
-		held_targets[drag.limb] = (local - anchor).limit_length(87 if drag.limb.ends_with("forearm") else (LEG_LENGTH - 1.0 if drag.limb.ends_with("thigh") else FOOT_REACH))
+		held_targets[drag.limb] = (local - anchor).limit_length(ARM_REACH if drag.limb.ends_with("forearm") else (LEG_LENGTH - 1.0 if drag.limb.ends_with("thigh") else FOOT_REACH))
 	_solve_pose()
 	var limbs: Array[String] = []
 	if drag.limb in ATTACK_LIMBS:
@@ -549,7 +580,7 @@ func _displace_guard(limb: String, damage: float, speed: float, direction: Vecto
 	var anchor: Vector2 = joints[side + ("_shoulder" if limb.ends_with("forearm") else "_hip")]
 	var endpoint: Vector2 = joints[side + ("_hand" if limb.ends_with("forearm") else "_foot")]
 	var local_direction := direction * Vector2(facing_direction, 1)
-	held_targets[limb] = (endpoint - anchor + local_direction * 35.0 + Vector2(0, 18)).limit_length(87 if limb.ends_with("forearm") else FOOT_REACH)
+	held_targets[limb] = (endpoint - anchor + local_direction * 35.0 + Vector2(0, 18)).limit_length(ARM_REACH if limb.ends_with("forearm") else FOOT_REACH)
 	if limb.ends_with("shin"):
 		held_targets.erase(side + "_thigh")
 	guard_stagger[limb] = 0.45
@@ -726,12 +757,15 @@ func _pixel(point: Vector2) -> Vector2:
 func _draw() -> void:
 	if joints.is_empty():
 		return
-	var warrior := profile.visual_style == "batyr"
+	var warrior := profile.visual_style in ["batyr", "jade"]
+	var atlas: Texture2D = ArcadeSkinType.atlas_for(profile.visual_style)
 	draw_set_transform(Vector2.ZERO, 0, Vector2.ONE * PIXEL_SIZE)
 	draw_rect(Rect2(-31 if warrior else -26, -1, 62 if warrior else 52, 3), Color(0.04, 0.03, 0.10, 0.45))
 	var posed := _pose_transform()
 	draw_set_transform(posed.origin, posed.get_rotation(), Vector2(PIXEL_SIZE * facing_direction, PIXEL_SIZE))
-	ArcadeSkinType.draw(self, joints, warrior)
+	ArcadeSkinType.draw(self, joints, profile.visual_style, atlas)
+	if video_face_active:
+		ArcadeSkinType.draw_video_face(self, joints, warrior, video_face_texture)
 	if hit_flash > 0.0:
 		draw_set_transform(Vector2.ZERO, 0, Vector2.ONE * PIXEL_SIZE)
 		var p := _pixel(hit_point)

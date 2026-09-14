@@ -14,6 +14,8 @@ func run() -> void:
 	var main := MainScene.instantiate()
 	root.add_child(main)
 	await process_frame
+	main._on_demo_requested()
+	main._on_fighter_selection_confirmed("batyr", "kiro")
 	var p: RagdollCharacter = main.player
 	var o: RagdollCharacter = main.opponent
 	# Slow lifting extends stance without jumping; a quick diagonal swipe launches.

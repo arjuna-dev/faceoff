@@ -4,6 +4,10 @@ extends RefCounted
 const VERSION := 1
 const TICK_RATE := 60
 const MAX_PLAYERS := 2
+const VALID_FIGHTERS := ["batyr", "kiro", "jade", "oculon"]
+
+static func is_valid_fighter(fighter_id: String) -> bool:
+	return fighter_id in VALID_FIGHTERS
 
 static func make_input(sequence: int, tick: int, selected_limb: String, limb_target: Vector2, movement: Vector2, assist: bool, expression_id: String) -> Dictionary:
 	return {

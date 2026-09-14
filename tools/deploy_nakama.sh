@@ -101,6 +101,19 @@ for required in POSTGRES_PASSWORD NAKAMA_SERVER_KEY NAKAMA_SESSION_ENCRYPTION_KE
         exit 1
     fi
 done
+twilio_missing=0
+for twilio_value in TWILIO_ACCOUNT_SID TWILIO_AUTH_TOKEN TWILIO_VERIFY_SERVICE_SID; do
+    if [[ -z "${!twilio_value:-}" ]]; then
+        twilio_missing=1
+    fi
+done
+if [[ "$twilio_missing" -eq 1 ]]; then
+    echo "Warning: Twilio Verify credentials are incomplete; phone sign-up will fail closed until all TWILIO_* values are set." >&2
+fi
+if [[ "${TWILIO_VERIFY_CHANNEL:-sms}" != "sms" && "${TWILIO_VERIFY_CHANNEL:-sms}" != "whatsapp" ]]; then
+    echo "TWILIO_VERIFY_CHANNEL must be sms or whatsapp." >&2
+    exit 1
+fi
 if [[ -n "${NAKAMA_NODE_NAME:-}" && "${#NAKAMA_NODE_NAME}" -gt 8 ]]; then
     echo "NAKAMA_NODE_NAME must be 8 characters or fewer so scaled nodes retain unique suffixes." >&2
     exit 1

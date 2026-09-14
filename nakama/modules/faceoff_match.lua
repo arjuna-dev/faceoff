@@ -6,6 +6,7 @@ local VERSION = 1
 local OP_STATE = 1
 local OP_HIT = 2
 local OP_ASSIGN = 3
+local OP_FIGHTER = 7
 local TICK_RATE = 20
 local MAX_PLAYERS = 2
 local MAX_DAMAGE = 32
@@ -29,6 +30,12 @@ local VALID_ATTACK_LIMBS = {
     right_thigh = true,
     left_shin = true,
     right_shin = true,
+}
+local VALID_FIGHTERS = {
+    batyr = true,
+    kiro = true,
+    jade = true,
+    oculon = true,
 }
 
 local function number(value, fallback)
@@ -216,14 +223,36 @@ local function sanitized_state(player, tick)
     return packet
 end
 
+local function end_invitation(state)
+    if not state.call_id then return end
+    local obj=nk.storage_read({{collection='calls',key=state.call_id}})[1]
+    if not obj or obj.value.status~='accepted' then return end
+    local call=obj.value
+    call.status='ended'
+    pcall(nk.storage_write,{{collection='calls',key=state.call_id,value=call,version=obj.version,permission_read=0,permission_write=0}})
+    for _,id in ipairs({call.caller,call.callee}) do
+        nk.notification_send(id,'Faceoff',{type='call',call=call},101,nil,true)
+    end
+end
+
 function M.match_init(context, setupstate)
-    return {
+	return {
         players = {},
+        allowed_users = setupstate.allowed_users,
+        call_id = setupstate.call_id,
         empty_ticks = 0,
     }, TICK_RATE, "game:faceoff protocol:1"
 end
 
 function M.match_join_attempt(context, dispatcher, tick, state, presence, metadata)
+    if state.allowed_users then
+        local allowed=false
+        for _,id in ipairs(state.allowed_users) do if id==presence.user_id then allowed=true end end
+        if not allowed then return state, false, "invitation required" end
+        for _,p in pairs(state.players) do
+            if p.presence.user_id==presence.user_id then return state,false,"already joined" end
+        end
+    end
     if player_count(state) >= MAX_PLAYERS then
         return state, false, "match is full"
     end
@@ -231,44 +260,87 @@ function M.match_join_attempt(context, dispatcher, tick, state, presence, metada
 end
 
 function M.match_join(context, dispatcher, tick, state, presences)
-    for _, presence in ipairs(presences) do
+	for _, presence in ipairs(presences) do
         local slot = allocate_slot(state)
-        if slot > 0 then
+		if slot > 0 then
             state.players[presence.session_id] = {
                 presence = presence,
                 slot = slot,
                 health = 100,
                 fighter = nil,
+                fighter_id = nil,
                 last_sequence = -1,
                 guard_strain = {},
                 guard_stagger = {},
             }
             dispatcher.broadcast_message(OP_ASSIGN, nk.json_encode({ v = VERSION, slot = slot }), { presence })
+            for _, existing in pairs(state.players) do
+                if existing.fighter_id then
+                    dispatcher.broadcast_message(OP_FIGHTER, nk.json_encode({
+                        v = VERSION,
+                        slot = existing.slot,
+                        fighter_id = existing.fighter_id,
+                    }), { presence })
+                end
+            end
         end
     end
+    dispatcher.broadcast_message(5, nk.json_encode({count=player_count(state)}))
     return state
 end
 
 function M.match_leave(context, dispatcher, tick, state, presences)
+    if state.call_id and #presences>0 then
+        end_invitation(state)
+        return nil
+    end
     for _, presence in ipairs(presences) do
         state.players[presence.session_id] = nil
     end
+    dispatcher.broadcast_message(5, nk.json_encode({count=player_count(state)}))
     return state
 end
 
 function M.match_loop(context, dispatcher, tick, state, messages)
+    if state.ready_count ~= player_count(state) then
+        state.ready_count = player_count(state)
+        dispatcher.broadcast_message(5, nk.json_encode({count=state.ready_count}))
+    end
     update_guard_state(state, tick)
     if player_count(state) == 0 then
         state.empty_ticks = state.empty_ticks + 1
-        if state.empty_ticks > TICK_RATE * 10 then return nil end
+        if state.empty_ticks > TICK_RATE * 90 then end_invitation(state); return nil end
     else
         state.empty_ticks = 0
     end
 
+    if state.allowed_users and player_count(state)<2 then
+        if tick > TICK_RATE * 90 then end_invitation(state); return nil end
+        return state
+    end
     for _, message in ipairs(messages) do
         local sender = state.players[message.sender.session_id]
-        if sender and message.op_code == OP_STATE then
-            local packet = nk.json_decode(message.data)
+        if sender and message.op_code == 6 then
+            if #message.data==2136 and player_count(state)==2 then
+                if sender.voice_tick ~= tick then sender.voice_tick=tick; sender.voice_count=0 end
+                sender.voice_count=sender.voice_count+1
+                if sender.voice_count <= 2 then dispatcher.broadcast_message(6,message.data,nil,message.sender) end
+            end
+        elseif sender and message.op_code == OP_FIGHTER then
+            local ok, payload = pcall(nk.json_decode, message.data)
+            if not ok then payload = {} end
+            local fighter_id = type(payload) == "table" and payload.fighter_id or nil
+            if type(fighter_id) == "string" and VALID_FIGHTERS[fighter_id] then
+                sender.fighter_id = fighter_id
+                dispatcher.broadcast_message(OP_FIGHTER, nk.json_encode({
+                    v = VERSION,
+                    slot = sender.slot,
+                    fighter_id = fighter_id,
+                }), nil, message.sender)
+            end
+        elseif sender and message.op_code == OP_STATE then
+            local ok,packet = pcall(nk.json_decode,message.data)
+            if not ok then packet={} end
             if valid_state(packet) and packet.sequence > sender.last_sequence then
                 sender.last_sequence = packet.sequence
                 packet.held_targets = packet.held_targets or {}
@@ -286,7 +358,8 @@ function M.match_loop(context, dispatcher, tick, state, messages)
                 end
             end
         elseif sender and message.op_code == OP_HIT then
-            local event = nk.json_decode(message.data)
+            local ok,event = pcall(nk.json_decode,message.data)
+            if not ok then event={} end
             local target = valid_hit(event) and player_for_slot(state, math.floor(event.target_slot)) or nil
             if target and target ~= sender and target.health > 0 then
                 local blocked = guard_is_active(target, event.region, tick)
@@ -329,6 +402,7 @@ function M.match_loop(context, dispatcher, tick, state, messages)
 end
 
 function M.match_signal(context, dispatcher, tick, state, data)
+    if data=="end" then return nil,"ended" end
     return state, data
 end
 

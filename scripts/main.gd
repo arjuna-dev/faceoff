@@ -4,8 +4,19 @@ const Fighter = preload("res://scripts/characters/ragdoll_character.gd")
 const Backdrop = preload("res://scripts/systems/arena_backdrop_2d.gd")
 const OnlineMatchType = preload("res://scripts/systems/online_match.gd")
 const NakamaMatchType = preload("res://scripts/systems/nakama_match.gd")
+const ContactsHomeType = preload("res://scripts/ui/contacts_home.gd")
+const SoloHomeType = preload("res://scripts/ui/solo_home.gd")
+const FighterLobbyType = preload("res://scripts/ui/fighter_lobby.gd")
+const ContactActionPanelType = preload("res://scripts/ui/contact_action_panel.gd")
+const FighterSelectType = preload("res://scripts/ui/fighter_select.gd")
+const FighterRosterType = preload("res://scripts/characters/fighter_roster.gd")
+const NetworkProtocolType = preload("res://scripts/systems/network_protocol.gd")
+const ContactsImporterType = preload("res://scripts/systems/android_contacts.gd")
+const MockMediaRoomType = preload("res://scripts/systems/mock_media_room.gd")
 var player: RagdollCharacter
 var opponent: RagdollCharacter
+var arena_backdrop: Node2D
+var arena_hud_layer: CanvasLayer
 var local_fighter: RagdollCharacter
 var remote_fighter: RagdollCharacter
 var online
@@ -15,6 +26,7 @@ var online_active := false
 var online_state_accumulator := 0.0
 var meters: Array[ProgressBar] = []
 var health_labels: Array[Label] = []
+var fighter_name_labels: Array[Label] = []
 var status: Label
 var timer: Label
 var round_seconds := 90.0
@@ -25,9 +37,44 @@ var online_url_edit: LineEdit
 var online_join_button: Button
 var online_leave_button: Button
 var online_status: Label
+var contacts_home: ContactsHome
+var contacts_layer: CanvasLayer
+var contacts_importer: AndroidContactsImporter
+var solo_home: SoloHome
+var solo_home_layer: CanvasLayer
+var fighter_lobby: FighterLobby
+var fighter_lobby_layer: CanvasLayer
+var contact_action_panel: ContactActionPanel
+var contact_action_layer: CanvasLayer
+var fighter_select: FighterSelect
+var fighter_select_layer: CanvasLayer
+var media_room: MediaRoom
+var navigation_portrait := false
+var voice: FighterVoice
+var mic_button: Button
+var social: FaceoffSocialController
+var accepted_match := ""
+var arena_peer_count := 0
+var assigned_slot := 0
+var online_local_fighter_id := ""
+var online_remote_fighter_id := ""
+var online_selection_pending := false
+var pending_invite_token := ""
+var resolving_invite := false
+var quick_fight_active := false
+var quick_fight_pending := false
+var contact_panel_return := "contacts"
+var fighter_select_return := "solo"
+var arena_return := "contacts"
+var exit_confirmation: ConfirmationDialog
 
 func _ready() -> void:
-	add_child(Backdrop.new())
+	get_tree().auto_accept_quit = false
+	if _is_mobile_platform():
+		DisplayServer.screen_set_orientation(DisplayServer.SCREEN_PORTRAIT)
+		get_tree().root.content_scale_size = Vector2i(540, 960)
+	arena_backdrop = Backdrop.new()
+	add_child(arena_backdrop)
 	player = Fighter.new()
 	player.position = Vector2(355, 459)
 	add_child(player)
@@ -49,7 +96,41 @@ func _ready() -> void:
 	online.name = "OnlineRelay"
 	add_child(online)
 	_wire_online_transport(online)
+	media_room = MockMediaRoomType.new()
+	media_room.name = "MediaRoom"
+	add_child(media_room)
 	_build_hud()
+	_build_solo_home()
+	_build_contacts_home()
+	_build_contact_action_panel()
+	_build_fighter_lobby()
+	_build_fighter_select()
+	_build_exit_confirmation()
+	_build_contacts_importer()
+	_build_social()
+	_set_arena_visible(false)
+	call_deferred("_apply_initial_navigation")
+
+func _build_exit_confirmation() -> void:
+	exit_confirmation = ConfirmationDialog.new()
+	exit_confirmation.title = "Exit Faceoff?"
+	exit_confirmation.dialog_text = "Are you sure you want to exit Faceoff?"
+	exit_confirmation.ok_button_text = "EXIT"
+	exit_confirmation.cancel_button_text = "STAY"
+	exit_confirmation.exclusive = true
+	exit_confirmation.confirmed.connect(_confirm_exit)
+	add_child(exit_confirmation)
+
+func _request_exit() -> void:
+	if exit_confirmation.visible:
+		exit_confirmation.hide()
+		return
+	exit_confirmation.popup_centered(Vector2i(420, 190))
+
+func _confirm_exit() -> void:
+	if nakama_online:
+		nakama_online.shutdown()
+	get_tree().quit()
 
 func _label(parent: Node, text: String, pos: Vector2, size: int, color: Color = Color("fff0d1")) -> Label:
 	var label := Label.new()
@@ -66,6 +147,8 @@ func _label(parent: Node, text: String, pos: Vector2, size: int, color: Color = 
 
 func _build_hud() -> void:
 	var layer := CanvasLayer.new()
+	arena_hud_layer = layer
+	layer.name = "ArenaHud"
 	add_child(layer)
 	var top := ColorRect.new()
 	top.color = Color("111727")
@@ -77,7 +160,8 @@ func _build_hud() -> void:
 	for i in 2:
 		var fighter: RagdollCharacter = player if i == 0 else opponent
 		var x := 24.0 if i == 0 else 551.0
-		_label(layer, "P%d  %s" % [i + 1, fighter.profile.display_name.to_upper()], Vector2(x, 42), 19)
+		var name_label := _label(layer, "P%d  %s" % [i + 1, fighter.profile.display_name.to_upper()], Vector2(x, 42), 19)
+		fighter_name_labels.append(name_label)
 		var meter := ProgressBar.new()
 		meter.position = Vector2(x, 73)
 		meter.size = Vector2(385, 20)
@@ -114,8 +198,31 @@ func _build_hud() -> void:
 	reset.size = Vector2(151, 38)
 	reset.pressed.connect(_reset)
 	layer.add_child(reset)
+	var contacts_button := Button.new()
+	contacts_button.text = "CONTACTS"
+	contacts_button.position = Vector2(678, 489)
+	contacts_button.size = Vector2(101, 38)
+	contacts_button.pressed.connect(_show_contacts_home)
+	layer.add_child(contacts_button)
 	_label(layer, "A / D  walk     SPACE  guard     P  practice", Vector2(24, 151), 12, Color("b3ced5"))
-	_label(layer, "ONLINE TEST", Vector2(596, 151), 11, Color("ffcb77"))
+	mic_button = Button.new()
+	mic_button.text = "Mic on"
+	mic_button.position = Vector2(790, 145)
+	mic_button.size = Vector2(150, 40)
+	mic_button.pressed.connect(func():
+		if online_active:
+			fighter_lobby.mic_enabled = not fighter_lobby.mic_enabled
+			_on_lobby_microphone_toggled(fighter_lobby.mic_enabled)
+			mic_button.text = "Mic on" if fighter_lobby.mic_enabled else "Mic off")
+	layer.add_child(mic_button)
+	var video_button := Button.new()
+	video_button.icon = preload("res://assets/ui/video.svg")
+	video_button.text = "Video"
+	video_button.position = Vector2(660, 145)
+	video_button.size = Vector2(120, 40)
+	video_button.disabled = true
+	video_button.tooltip_text = "Face video is not available yet"
+	layer.add_child(video_button)
 	online_url_edit = LineEdit.new()
 	online_url_edit.name = "OnlineServerUrl"
 	online_url_edit.text = _configured_online_endpoint()
@@ -137,7 +244,600 @@ func _build_hud() -> void:
 	online_leave_button.size = Vector2(42, 28)
 	online_leave_button.pressed.connect(_leave_online)
 	layer.add_child(online_leave_button)
-	online_status = _label(layer, "offline local", Vector2(596, 174), 11, Color("9cb5c6"))
+	online_status = _label(layer, "", Vector2(596, 190), 11, Color("9cb5c6"))
+	for control in [online_url_edit, online_join_button, online_leave_button]:
+		control.hide()
+	layer.visible = false
+
+func _build_contacts_home() -> void:
+	contacts_layer = CanvasLayer.new()
+	contacts_layer.name = "ContactsLayer"
+	contacts_layer.layer = 5
+	add_child(contacts_layer)
+	contacts_home = ContactsHomeType.new()
+	contacts_home.portrait_mode = true
+	contacts_home.call_requested.connect(_on_contact_call_requested)
+	contacts_home.message_requested.connect(_on_contact_message_requested)
+	contacts_home.demo_requested.connect(_on_demo_requested)
+	contacts_home.import_requested.connect(_on_import_contacts)
+	contacts_home.invite_contact_requested.connect(_on_invite_contact_requested)
+	contacts_home.tab_requested.connect(_on_navigation_tab_requested)
+	contacts_home.recent_chats_updated.connect(_on_recent_chats_updated)
+	contacts_home.contact_selected.connect(_on_contact_selected)
+	contacts_layer.add_child(contacts_home)
+	_set_fighter_input_enabled(false)
+
+func _build_solo_home() -> void:
+	solo_home_layer = CanvasLayer.new()
+	solo_home_layer.name = "SoloHomeLayer"
+	solo_home_layer.layer = 4
+	add_child(solo_home_layer)
+	solo_home = SoloHomeType.new()
+	solo_home.call_friend_requested.connect(_on_call_friend_requested)
+	solo_home.quick_fight_requested.connect(_on_quick_fight_requested)
+	solo_home.demo_requested.connect(_on_demo_requested)
+	solo_home.tab_requested.connect(_on_navigation_tab_requested)
+	solo_home.contact_requested.connect(_on_recent_chat_requested)
+	solo_home_layer.add_child(solo_home)
+	solo_home_layer.hide()
+
+func _build_contact_action_panel() -> void:
+	contact_action_layer = CanvasLayer.new()
+	contact_action_layer.name = "ContactActionLayer"
+	contact_action_layer.layer = 6
+	add_child(contact_action_layer)
+	contact_action_panel = ContactActionPanelType.new()
+	contact_action_panel.start_fight_requested.connect(_on_contact_start_fight_requested)
+	contact_action_panel.back_requested.connect(_on_contact_action_back_requested)
+	contact_action_layer.add_child(contact_action_panel)
+
+func _build_fighter_lobby() -> void:
+	fighter_lobby_layer = CanvasLayer.new()
+	fighter_lobby_layer.name = "FighterLobbyLayer"
+	fighter_lobby_layer.layer = 6
+	add_child(fighter_lobby_layer)
+	fighter_lobby = FighterLobbyType.new()
+	fighter_lobby.portrait_mode = true
+	fighter_lobby.accept_requested.connect(_on_lobby_accept_requested)
+	fighter_lobby.decline_requested.connect(_on_lobby_decline_requested)
+	fighter_lobby.cancel_requested.connect(_on_lobby_cancel_requested)
+	fighter_lobby.microphone_toggled.connect(_on_lobby_microphone_toggled)
+	fighter_lobby.camera_toggled.connect(_on_lobby_camera_toggled)
+	fighter_lobby_layer.add_child(fighter_lobby)
+
+func _build_fighter_select() -> void:
+	fighter_select_layer = CanvasLayer.new()
+	fighter_select_layer.name = "FighterSelectLayer"
+	fighter_select_layer.layer = 7
+	add_child(fighter_select_layer)
+	fighter_select = FighterSelectType.new()
+	fighter_select.selection_confirmed.connect(_on_fighter_selection_confirmed)
+	fighter_select.online_selection_confirmed.connect(_on_online_fighter_selection_confirmed)
+	fighter_select.cancel_requested.connect(_on_fighter_selection_cancelled)
+	fighter_select_layer.add_child(fighter_select)
+
+func _build_contacts_importer() -> void:
+	contacts_importer = ContactsImporterType.new()
+	contacts_importer.name = "AndroidContactsImporter"
+	contacts_importer.contacts_ready.connect(_on_contacts_ready)
+	contacts_importer.status_changed.connect(_on_contact_import_status)
+	contacts_importer.invite_received.connect(_on_invite_received)
+	add_child(contacts_importer)
+
+func _apply_initial_navigation() -> void:
+	_show_solo_home()
+	if contacts_importer:
+		contacts_importer.auto_import_if_permitted()
+
+func _show_solo_home() -> void:
+	if fighter_lobby:
+		fighter_lobby.hide()
+	if fighter_select:
+		fighter_select.close_screen()
+	if contacts_home:
+		contacts_home.hide()
+	if contact_action_panel:
+		contact_action_panel.close_panel()
+	_set_navigation_mode(false)
+	_set_arena_visible(false)
+	arena_backdrop.visible = true
+	player.visible = true
+	player.process_mode = Node.PROCESS_MODE_INHERIT
+	opponent.visible = false
+	opponent.process_mode = Node.PROCESS_MODE_DISABLED
+	player.reset_character()
+	player.network_remote = false
+	player.combat_enabled = false
+	player.input_enabled = true
+	opponent.input_enabled = false
+	if solo_home_layer:
+		solo_home_layer.show()
+
+func _on_call_friend_requested() -> void:
+	_show_contacts_home()
+
+func _on_quick_fight_requested() -> void:
+	if quick_fight_active:
+		return
+	quick_fight_active = true
+	quick_fight_pending = true
+	accepted_match = ""
+	assigned_slot = 0
+	arena_peer_count = 0
+	online_local_fighter_id = ""
+	online_remote_fighter_id = ""
+	online_selection_pending = false
+	practice = false
+	if contacts_home:
+		contacts_home.hide()
+	if contact_action_panel:
+		contact_action_panel.close_panel()
+	if solo_home_layer:
+		solo_home_layer.hide()
+	if fighter_select:
+		fighter_select.close_screen()
+	_set_navigation_mode(false)
+	_set_arena_visible(false)
+	_set_fighter_input_enabled(false)
+	fighter_lobby.set_layout_mode(false)
+	fighter_lobby.open_for_quick_fight()
+	if nakama_online and nakama_online.service and nakama_online.service.connected:
+		call_deferred("_begin_quick_matchmaking")
+	elif nakama_online:
+		fighter_lobby.set_connection_status("CONNECTING TO NAKAMA")
+		nakama_online.connect_to_server(_configured_online_endpoint())
+
+func _begin_quick_matchmaking() -> void:
+	if not quick_fight_active or not quick_fight_pending or not nakama_online or not nakama_online.service.connected:
+		return
+	quick_fight_pending = false
+	var started := await nakama_online.begin_quick_fight()
+	if not started and quick_fight_active:
+		fighter_lobby.set_connection_status("ERROR - COULD NOT START SEARCH")
+
+func _on_navigation_tab_requested(tab: String) -> void:
+	if tab == "chats":
+		_show_solo_home()
+	elif tab == "settings":
+		_show_contacts_page("settings")
+	elif tab == "profile":
+		_show_contacts_page("profile")
+	else:
+		_show_contacts_home()
+
+func _show_contacts_page(destination: String) -> void:
+	_show_contacts_home()
+	if destination == "settings":
+		contacts_home.open_settings()
+	elif destination == "profile":
+		contacts_home.open_profile()
+
+func _on_recent_chat_requested(contact: Dictionary) -> void:
+	_show_contact_actions(contact, "chats")
+
+func _on_recent_chats_updated(recent: Array[Dictionary]) -> void:
+	if solo_home:
+		solo_home.set_recent_chats(recent)
+
+func _show_contacts_home() -> void:
+	if online_active or online_selection_pending or quick_fight_active:
+		if social and social.current_call.get("status", "") == "accepted":
+			social.action("end")
+		_leave_online()
+	if fighter_lobby:
+		fighter_lobby.hide()
+	if fighter_select:
+		fighter_select.close_screen()
+	if contact_action_panel:
+		contact_action_panel.close_panel()
+	if contacts_home:
+		contacts_home.set_layout_mode(true)
+		contacts_home.open_friends()
+		contacts_home.show()
+	_set_navigation_mode(true)
+	_set_arena_visible(false)
+	_set_fighter_input_enabled(false)
+
+func _on_contact_selected(contact: Dictionary) -> void:
+	_show_contact_actions(contact, "contacts")
+
+func _show_contact_actions(contact: Dictionary, return_page: String) -> void:
+	contact_panel_return = return_page
+	if contacts_home:
+		contacts_home.hide()
+	if solo_home_layer:
+		solo_home_layer.hide()
+	if fighter_lobby:
+		fighter_lobby.hide()
+	if fighter_select:
+		fighter_select.close_screen()
+	_set_navigation_mode(false)
+	_set_arena_visible(false)
+	arena_backdrop.visible = true
+	player.visible = true
+	player.process_mode = Node.PROCESS_MODE_INHERIT
+	opponent.visible = false
+	opponent.process_mode = Node.PROCESS_MODE_DISABLED
+	player.network_remote = false
+	player.combat_enabled = false
+	player.input_enabled = true
+	opponent.input_enabled = false
+	contact_action_panel.open_for_contact(contact)
+
+func _on_contact_start_fight_requested(contact: Dictionary) -> void:
+	contact_action_panel.close_panel()
+	await _on_contact_call_requested(contact)
+
+func _on_contact_action_back_requested() -> void:
+	if contact_panel_return == "chats":
+		_show_solo_home()
+	else:
+		_show_contacts_home()
+
+func _build_social() -> void:
+	nakama_online = NakamaMatchType.new()
+	add_child(nakama_online)
+	_wire_online_transport(nakama_online)
+	online = nakama_online
+	online_transport = "nakama"
+	social = FaceoffSocialController.new()
+	add_child(social)
+	social.contacts_updated.connect(_on_social_contacts_updated)
+	social.profile_updated.connect(contacts_home.set_account)
+	social.status_changed.connect(_social_status)
+	social.message_received.connect(contacts_home.append_message)
+	social.call_updated.connect(_on_call_updated)
+	social.initialize(nakama_online.service)
+	voice = FighterVoice.new()
+	add_child(voice)
+	voice.initialize(nakama_online.service)
+	voice.microphone_status.connect(func(text): mic_button.text = text)
+	contacts_home.phone_code_requested.connect(social.send_code)
+	contacts_home.phone_verify_requested.connect(social.verify)
+	contacts_home.send_requested.connect(social.send_message)
+	contacts_home.invite_channel_requested.connect(_share_invite)
+	nakama_online.service.arena_presence.connect(_on_arena_presence)
+	if OS.get_environment("FACE_OFF_DISABLE_NETWORK") != "1":
+		nakama_online.connect_to_server(_configured_online_endpoint())
+
+func _share_invite(channel: String) -> void:
+	contacts_importer.share_invite(channel)
+
+func _on_invite_contact_requested(contact: Dictionary) -> void:
+	if social and social.verified and social.service != null and social.service.connected:
+		var result := await social.create_invite_link(contact)
+		var token := String(result.get("token", ""))
+		if not token.is_empty():
+			contacts_importer.invite_contact(contact, ContactsImporterType.invite_url(token))
+			return
+	contacts_importer.invite_contact(contact)
+
+func _on_invite_received(url: String) -> void:
+	var token := _invite_token(url)
+	if token.is_empty():
+		return
+	pending_invite_token = token
+	if resolving_invite:
+		return
+	resolving_invite = true
+	call_deferred("_resolve_incoming_invite")
+
+func _resolve_incoming_invite() -> void:
+	var token := pending_invite_token
+	pending_invite_token = ""
+	for _i in 80:
+		if social != null and social.service != null and social.service.connected:
+			break
+		await get_tree().create_timer(0.25).timeout
+	if social == null or social.service == null or not social.service.connected:
+		if contacts_home:
+			_show_contacts_home()
+			contacts_home.set_import_status("Invite received. Connect to Faceoff to continue.", false)
+		resolving_invite = false
+		return
+	var result := await social.resolve_invite_token(token)
+	if result.has("error"):
+		_show_contacts_home()
+		resolving_invite = false
+		return
+	var number := String(result.get("phone", "")).strip_edges()
+	if number.is_empty():
+		_show_contacts_home()
+		contacts_home.set_import_status("Invite link did not include a phone number.", false)
+	else:
+		var inviter := String(result.get("inviter_name", "Friend")).strip_edges()
+		if inviter.is_empty():
+			inviter = "Friend"
+		_show_contacts_home()
+		contacts_home.prefill_phone(number)
+		contacts_home.set_import_status("Invite from %s ready. Verify this number to continue." % inviter, true)
+	resolving_invite = false
+
+func _invite_token(url: String) -> String:
+	var prefix := "faceoff://invite/"
+	var value := url.strip_edges()
+	if not value.to_lower().begins_with(prefix):
+		return ""
+	var token := value.substr(prefix.length())
+	var query := token.find("?")
+	if query >= 0:
+		token = token.substr(0, query)
+	var fragment := token.find("#")
+	if fragment >= 0:
+		token = token.substr(0, fragment)
+	return token if token.length() == 36 else ""
+
+func _on_social_contacts_updated(updated_contacts: Array[Dictionary]) -> void:
+	contacts_home.add_contacts(updated_contacts)
+	if solo_home:
+		solo_home.set_recent_chats(contacts_home.recent_contacts())
+
+func _on_contact_call_requested(contact: Dictionary) -> void:
+	contacts_home.mark_contact_used(contact)
+	await social.invite(contact)
+
+func _on_call_updated(call: Dictionary) -> void:
+	var state := String(call.get("status", ""))
+	if state in ["ringing", "accepted"] and social and social.service:
+		var peer := String(call.get("caller", "")) if String(call.get("callee", "")) == social.service.user_id else String(call.get("callee", ""))
+		contacts_home.mark_peer_used(peer)
+	if state == "ringing":
+		contacts_home.hide()
+		if contact_action_panel:
+			contact_action_panel.close_panel()
+		_set_arena_visible(false)
+		_set_fighter_input_enabled(false)
+		_set_navigation_mode(true)
+		var incoming: bool = call.get("callee") == social.service.user_id
+		if fighter_lobby.contact.get("id") != call.id or not fighter_lobby.visible:
+			fighter_lobby.open_for_call({"id": call.id, "name": call.get("contact_name", "Contact")}, incoming)
+		fighter_lobby.set_connection_status("Incoming call" if incoming else "Waiting for your friend to accept")
+	elif state == "accepted" and call.has("match_id") and accepted_match != call.match_id:
+		accepted_match = call.match_id
+		assigned_slot = 0
+		arena_peer_count = 0
+		online_local_fighter_id = ""
+		online_remote_fighter_id = ""
+		online_selection_pending = false
+		practice = false
+		_reset()
+		_set_fighter_input_enabled(false)
+		fighter_lobby.set_connecting()
+		fighter_lobby.set_connection_status("Accepted. Connecting both players...")
+		if not await social.service.join_invited_match(accepted_match):
+			await social.action("end")
+			_show_contacts_home()
+		else:
+			_open_online_fighter_select()
+	elif state in ["declined", "cancelled", "expired", "ended"]:
+		_leave_online()
+		_show_contacts_home()
+		contacts_home.set_import_status("Call " + state)
+
+func _on_lobby_accept_requested() -> void:
+	fighter_lobby.set_waiting(true)
+	await social.action("accept")
+	if social.current_call.get("status") == "ringing":
+		fighter_lobby.set_waiting(false)
+
+func _on_lobby_decline_requested() -> void:
+	await social.action("decline")
+
+func _on_lobby_cancel_requested() -> void:
+	if quick_fight_active:
+		_leave_online()
+		_show_solo_home()
+		return
+	await social.action("end" if social.current_call.get("status") == "accepted" else "cancel")
+
+func _on_arena_presence(count: int) -> void:
+	arena_peer_count = count
+	if count < 2:
+		_set_fighter_input_enabled(false)
+		if online_active:
+			var was_quick := quick_fight_active
+			if not was_quick:
+				await social.action("end")
+			_leave_online()
+			if was_quick:
+				_show_solo_home()
+			else:
+				_show_contacts_home()
+	else:
+		_open_online_fighter_select()
+		_try_enter_arena()
+
+func _try_enter_arena() -> void:
+	if online_active:
+		return
+	if accepted_match.is_empty() or assigned_slot == 0 or arena_peer_count != 2:
+		return
+	if online_local_fighter_id.is_empty() or online_remote_fighter_id.is_empty():
+		return
+	arena_return = "solo" if quick_fight_active else "contacts"
+	var local_profile := FighterRosterType.profile(online_local_fighter_id)
+	var remote_profile := FighterRosterType.profile(online_remote_fighter_id)
+	if assigned_slot == 1:
+		player.set_profile(local_profile)
+		opponent.set_profile(remote_profile)
+	else:
+		player.set_profile(remote_profile)
+		opponent.set_profile(local_profile)
+	fighter_name_labels[0].text = "P1  " + player.profile.display_name.to_upper()
+	fighter_name_labels[1].text = "P2  " + opponent.profile.display_name.to_upper()
+	_reset()
+	online_active = true
+	online_selection_pending = false
+	if fighter_select:
+		fighter_select.close_screen()
+	fighter_lobby.hide()
+	contacts_home.hide()
+	_set_navigation_mode(false)
+	_set_arena_visible(true)
+	local_fighter = player if assigned_slot == 1 else opponent
+	remote_fighter = opponent if assigned_slot == 1 else player
+	for fighter in [player, opponent]:
+		fighter.network_remote = fighter == remote_fighter
+		fighter.input_enabled = fighter == local_fighter
+		fighter.combat_enabled = true
+	mic_button.text = "Mic on" if fighter_lobby.mic_enabled else "Mic off"
+	status.text = "ONLINE - you control P%d" % assigned_slot
+	voice.start(fighter_lobby.mic_enabled)
+	if fighter_lobby.mic_enabled:
+		contacts_importer.request_media_permission("android.permission.RECORD_AUDIO")
+
+func _on_lobby_microphone_toggled(enabled: bool) -> void:
+	if voice:
+		voice.set_microphone(enabled)
+	if media_room:
+		media_room.publish_microphone(enabled)
+	if enabled and online_active and _is_mobile_platform():
+		if contacts_importer:
+			contacts_importer.request_media_permission("android.permission.RECORD_AUDIO")
+	if fighter_lobby:
+		fighter_lobby.set_connection_status("MIC %s / READY TO CONNECT" % ("ON" if enabled else "OFF"))
+
+func _on_lobby_camera_toggled(_enabled: bool) -> void:
+	# Face video is unavailable. Never request camera permission.
+	pass
+
+func _on_import_contacts() -> void:
+	if contacts_importer:
+		contacts_home.set_import_status("Requesting phone Contacts permission")
+		contacts_importer.request_import()
+
+func _on_contacts_ready(imported: Array[Dictionary]) -> void:
+	await social.import_contacts(imported)
+
+func _on_contact_import_status(message: String, good: bool) -> void:
+	if contacts_home:
+		contacts_home.set_import_status(message, good)
+
+func _is_mobile_platform() -> bool:
+	return OS.has_feature("android") or OS.has_feature("ios")
+
+func _set_navigation_mode(portrait: bool) -> void:
+	navigation_portrait = portrait
+	if contacts_home:
+		contacts_home.set_layout_mode(portrait)
+	if fighter_lobby:
+		fighter_lobby.set_layout_mode(portrait)
+	get_tree().root.content_scale_size = Vector2i(540, 960) if portrait else Vector2i(960, 540)
+	if not _is_mobile_platform():
+		get_window().size = Vector2i(540, 960) if portrait else Vector2i(960, 540)
+		return
+	var orientation := DisplayServer.SCREEN_PORTRAIT if portrait else DisplayServer.SCREEN_LANDSCAPE
+	DisplayServer.screen_set_orientation(orientation)
+	get_tree().root.content_scale_size = Vector2i(540, 960) if portrait else Vector2i(960, 540)
+
+func _set_arena_visible(value: bool) -> void:
+	if solo_home_layer:
+		solo_home_layer.hide()
+	if arena_backdrop:
+		arena_backdrop.visible = value
+	if player:
+		player.visible = value
+		player.process_mode = Node.PROCESS_MODE_INHERIT if value else Node.PROCESS_MODE_DISABLED
+	if opponent:
+		opponent.visible = value
+		opponent.process_mode = Node.PROCESS_MODE_INHERIT if value else Node.PROCESS_MODE_DISABLED
+	if arena_hud_layer:
+		arena_hud_layer.visible = value
+
+func _on_contact_message_requested(contact: Dictionary) -> void:
+	status.text = "CHAT WITH %s - CALL WHEN READY" % String(contact.get("name", "CONTACT")).to_upper()
+
+func _on_demo_requested() -> void:
+	# A demo is always local. Stop a pending or active Nakama transport first so
+	# both fighters remain draggable on this device.
+	if online_transport == "nakama" or online_active:
+		_leave_online()
+	_show_fighter_select()
+
+func _show_fighter_select() -> void:
+	fighter_select_return = "solo" if solo_home_layer and solo_home_layer.visible else "contacts"
+	online_selection_pending = false
+	if contacts_home:
+		contacts_home.hide()
+	if fighter_lobby:
+		fighter_lobby.hide()
+	if contact_action_panel:
+		contact_action_panel.close_panel()
+	_set_navigation_mode(false)
+	_set_arena_visible(false)
+	_set_fighter_input_enabled(false)
+	if fighter_select:
+		fighter_select.open_for_demo()
+
+func _on_fighter_selection_cancelled() -> void:
+	var was_quick := quick_fight_active
+	if online_selection_pending:
+		online_selection_pending = false
+		if social and social.current_call.get("status", "") == "accepted":
+			social.action("end")
+		_leave_online()
+	if was_quick or fighter_select_return == "solo":
+		_show_solo_home()
+	else:
+		_show_contacts_home()
+
+func _open_online_fighter_select() -> void:
+	if online_active or accepted_match.is_empty() or assigned_slot == 0 or not fighter_select:
+		return
+	if online_selection_pending:
+		return
+	online_selection_pending = true
+	if contacts_home:
+		contacts_home.hide()
+	if contact_action_panel:
+		contact_action_panel.close_panel()
+	if fighter_lobby:
+		fighter_lobby.hide()
+	_set_navigation_mode(false)
+	_set_arena_visible(false)
+	_set_fighter_input_enabled(false)
+	fighter_select.open_for_online(assigned_slot)
+	if not online_remote_fighter_id.is_empty():
+		fighter_select.set_online_opponent_ready()
+
+func _on_online_fighter_selection_confirmed(fighter_id: String) -> void:
+	if not online_selection_pending or online_active or assigned_slot == 0:
+		return
+	if not NetworkProtocolType.is_valid_fighter(fighter_id):
+		return
+	online_local_fighter_id = fighter_id
+	if fighter_select:
+		fighter_select.set_online_waiting()
+	if online and online.has_method("submit_fighter_selection"):
+		online.submit_fighter_selection(fighter_id)
+	_try_enter_arena()
+
+func _on_fighter_selection_confirmed(player_id: String, opponent_id: String) -> void:
+	arena_return = fighter_select_return
+	player.set_profile(FighterRosterType.profile(player_id))
+	opponent.set_profile(FighterRosterType.profile(opponent_id))
+	fighter_name_labels[0].text = "P1  " + player.profile.display_name.to_upper()
+	fighter_name_labels[1].text = "P2  " + opponent.profile.display_name.to_upper()
+	practice = true
+	_reset()
+	if fighter_select:
+		fighter_select.close_screen()
+	if fighter_lobby:
+		fighter_lobby.hide()
+	if contacts_home:
+		contacts_home.hide()
+	for fighter in [player, opponent]:
+		fighter.network_remote = false
+		fighter.input_enabled = true
+		fighter.combat_enabled = true
+	_set_navigation_mode(false)
+	_set_arena_visible(true)
+	if status:
+		status.text = "DEMO / %s VS %s" % [player.profile.display_name.to_upper(), opponent.profile.display_name.to_upper()]
+
+func _set_fighter_input_enabled(enabled: bool) -> void:
+	for fighter in [player, opponent]:
+		fighter.input_enabled = enabled
 
 func _configured_online_endpoint() -> String:
 	var environment_value := OS.get_environment("FACE_OFF_ONLINE_ENDPOINT").strip_edges()
@@ -149,6 +849,8 @@ func _configured_online_endpoint() -> String:
 	return "ws://127.0.0.1:9100"
 
 func _physics_process(delta: float) -> void:
+	if not arena_hud_layer.visible:
+		return
 	for fighter in [player, opponent]:
 		var label: Label = balance_labels[fighter.player_index - 1]
 		if fighter.is_fallen:
@@ -181,10 +883,15 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		return
 	if event.keycode == KEY_R:
 		_reset()
+	elif event.keycode == KEY_C:
+		_show_contacts_home()
+	elif event.keycode == KEY_ESCAPE:
+		_back_navigation()
 	elif event.keycode == KEY_SPACE and not round_over:
 		for fighter in [player, opponent]:
-			fighter.return_to_guard()
-	elif event.keycode == KEY_P:
+			if fighter.input_enabled:
+				fighter.return_to_guard()
+	elif event.keycode == KEY_P and not online_active:
 		practice = not practice
 		_reset()
 
@@ -202,7 +909,11 @@ func _wire_online_transport(transport: Node) -> void:
 	transport.slot_assigned.connect(_on_online_slot_assigned)
 	transport.remote_state_received.connect(_on_remote_state)
 	transport.remote_hit_received.connect(_on_remote_hit)
+	if transport.has_signal("remote_fighter_selected"):
+		transport.remote_fighter_selected.connect(_on_remote_fighter_selected)
 	transport.connection_changed.connect(_on_online_connection_changed)
+	if transport.has_signal("peer_count_changed"):
+		transport.peer_count_changed.connect(_on_online_peer_count)
 
 func _on_remote_state(slot: int, state: Dictionary) -> void:
 	if not online_active:
@@ -225,70 +936,70 @@ func _on_remote_hit(attacker_slot: int, damage: float, speed: float, region: Str
 		local_fighter._displace_guard(region, impact_damage, speed, direction)
 	local_fighter.receive_hit(damage, Vector2.ZERO)
 
+func _on_remote_fighter_selected(slot: int, fighter_id: String) -> void:
+	if slot <= 0 or slot == assigned_slot or not NetworkProtocolType.is_valid_fighter(fighter_id):
+		return
+	online_remote_fighter_id = fighter_id
+	if fighter_select and fighter_select.visible:
+		fighter_select.set_online_opponent_ready()
+	_try_enter_arena()
+
 func _on_online_status(message: String) -> void:
 	if online_status:
 		online_status.text = message
+	if fighter_lobby and fighter_lobby.visible:
+		fighter_lobby.set_connection_status(message)
 	if (message.contains("ERROR") or message.contains("DISCONNECTED")) and online_join_button:
 		online_join_button.disabled = false
 
+func _on_online_peer_count(count: int) -> void:
+	if fighter_lobby and fighter_lobby.visible:
+		fighter_lobby.set_peer_count(count)
+
 func _on_online_connection_changed(connected: bool) -> void:
 	if connected:
+		if quick_fight_active and quick_fight_pending:
+			call_deferred("_begin_quick_matchmaking")
 		return
-	if online_active or (online_join_button and online_join_button.disabled):
+	if online_active or online_selection_pending or quick_fight_active or not accepted_match.is_empty() or (online_join_button and online_join_button.disabled):
+		var was_quick := quick_fight_active
 		_leave_online()
+		if was_quick:
+			_show_solo_home()
+		else:
+			_show_contacts_home()
 
 func _on_online_slot_assigned(slot: int) -> void:
-	online_active = true
-	local_fighter = player if slot == player.player_index else opponent
-	remote_fighter = opponent if local_fighter == player else player
-	for fighter in [player, opponent]:
-		fighter.network_remote = fighter == remote_fighter
-		fighter.input_enabled = fighter == local_fighter
-		fighter.combat_enabled = true
-	if online_status:
-		online_status.text = "P%d ONLINE · waiting for opponent" % slot
-	if status:
-		status.text = "ONLINE P%d · waiting for the second fighter" % slot
+	assigned_slot = slot
+	if quick_fight_active and accepted_match.is_empty() and nakama_online and nakama_online.service:
+		accepted_match = nakama_online.service.match_id
+		quick_fight_pending = false
+	_open_online_fighter_select()
+	_try_enter_arena()
 
 func _join_online() -> void:
-	var url := online_url_edit.text.strip_edges() if online_url_edit else ""
-	var use_nakama := url.begins_with("nakama://") or url.begins_with("nakamas://") or url.begins_with("http://") or url.begins_with("https://")
-	if use_nakama and online_transport != "nakama":
-		if online:
-			online.shutdown()
-		if not nakama_online:
-			nakama_online = NakamaMatchType.new()
-			nakama_online.name = "NakamaOnline"
-			add_child(nakama_online)
-			_wire_online_transport(nakama_online)
-		online = nakama_online
-		online_transport = "nakama"
-	elif not use_nakama and online_transport != "relay":
-		if online:
-			online.shutdown()
-		# The relay is created during _ready and remains the local fallback.
-		online = get_node_or_null("OnlineRelay")
-		online_transport = "relay"
-	if not online:
-		return
-	online.connect_to_server(url)
-	if online_join_button:
-		online_join_button.disabled = true
+	contacts_home.set_import_status("Select a verified contact to start a call")
+	_show_contacts_home()
 
 func _leave_online() -> void:
-	if online:
-		online.shutdown()
+	if voice:
+		voice.stop()
+	if nakama_online:
+		if quick_fight_active or quick_fight_pending:
+			nakama_online.cancel_quick_fight()
+		nakama_online.service.leave_arena()
+		nakama_online.player_slot = 0
+	accepted_match = ""
+	assigned_slot = 0
+	arena_peer_count = 0
+	online_local_fighter_id = ""
+	online_remote_fighter_id = ""
+	online_selection_pending = false
 	online_active = false
-	local_fighter = player
-	remote_fighter = opponent
-	for fighter in [player, opponent]:
-		fighter.network_remote = false
-		fighter.input_enabled = true
-		fighter.combat_enabled = true
-	if online_join_button:
-		online_join_button.disabled = false
-	if online_status:
-		online_status.text = "offline local"
+	quick_fight_active = false
+	quick_fight_pending = false
+	online_state_accumulator = 0.0
+	_set_fighter_input_enabled(false)
 
 
 func _hit(fighter: RagdollCharacter, damage: float) -> void:
@@ -308,6 +1019,8 @@ func _end_round(message: String) -> void:
 		fighter.movement_intent = Vector2.ZERO
 
 func _reset() -> void:
+	if online_active:
+		return
 	round_seconds = 90
 	round_over = false
 	player.reset_character()
@@ -316,3 +1029,46 @@ func _reset() -> void:
 	opponent.combat_enabled = true
 	timer.text = "--" if practice else "90"
 	status.text = "PRACTICE / unlimited time, manual strikes" if practice else "FIGHT!  Drag hands, feet or knees."
+
+	_set_fighter_input_enabled(practice and arena_hud_layer.visible)
+
+func _social_status(message: String) -> void:
+	contacts_home.set_import_status(message)
+	if fighter_lobby.visible:
+		fighter_lobby.set_connection_status(message)
+
+func _back_navigation() -> void:
+	if fighter_select and fighter_select.visible:
+		_on_fighter_selection_cancelled()
+	elif contact_action_panel and contact_action_panel.visible:
+		_on_contact_action_back_requested()
+	elif fighter_lobby.visible:
+		if quick_fight_active:
+			_on_lobby_cancel_requested()
+		elif social.current_call.get("status") == "accepted":
+			social.action("end")
+		elif fighter_lobby.incoming:
+			_on_lobby_decline_requested()
+		else:
+			_on_lobby_cancel_requested()
+	elif arena_hud_layer.visible:
+		if arena_return == "solo":
+			_show_solo_home()
+		else:
+			_show_contacts_home()
+	elif contacts_home.visible:
+		if not contacts_home.go_back():
+			_show_solo_home()
+	elif solo_home_layer.visible:
+		_request_exit()
+	else:
+		_show_solo_home()
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_WM_GO_BACK_REQUEST:
+		_back_navigation()
+	elif what == NOTIFICATION_WM_CLOSE_REQUEST:
+		if _is_mobile_platform():
+			_request_exit()
+		else:
+			_confirm_exit()

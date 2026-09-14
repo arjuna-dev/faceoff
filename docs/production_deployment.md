@@ -30,6 +30,8 @@ Start the stack after DNS has propagated:
 ./tools/deploy_nakama.sh --env-file .env.production --observability
 ```
 
+Before inviting phone users, set `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, and `TWILIO_VERIFY_SERVICE_SID` in `.env.production`. The deployment helper warns when these values are incomplete; Nakama deliberately fails closed for phone sign-up until they are present.
+
 Caddy obtains and renews the certificate automatically through ACME. The client endpoint is:
 
 ```text

@@ -1,5 +1,8 @@
 # Two-player Android test
 
+For the current contacts-first app, use [social_play.md](social_play.md). Phone sign-in needs the configured SMS provider, and both invited users must accept/join the same call before gameplay. The relay and anonymous matchmaker instructions below are development diagnostics, not the normal app lobby.
+
+
 Faceoff has two network transports in the game scene:
 
 - `nakama://HOST:7350` uses the real Nakama client, anonymous device authentication, matchmaker, and the authoritative Lua match handler.
@@ -21,7 +24,7 @@ If another local stack already owns ports 7350 and 7351, map different host port
 NAKAMA_PORT=7352 NAKAMA_CONSOLE_PORT=7353 docker compose -f docker_compose.yml up -d postgres nakama
 ```
 
-Enter `nakama://127.0.0.1:7352` in the game in that case. On two Android devices, replace `127.0.0.1` with the computer's LAN address. The first two authenticated devices are matched into one authoritative `faceoff_match`. Each device owns its local drag input and sends validated state and hit intents. The Lua match validates the packet, maintains health, checks forearm and shin shields, applies chip damage, accumulates guard strain, displaces a shield after a strong or repeated blow, and routes authoritative results and snapshots to both clients.
+Enter `nakama://127.0.0.1:7352` in the game in that case. On two Android devices, replace `127.0.0.1` with the computer's LAN address. The first two authenticated devices are matched into one authoritative `faceoff_match`. After both slots are present, each player selects one fighter and taps READY; the selected roster IDs are relayed before the landscape arena opens. Each device owns its local drag input and sends validated state and hit intents. The Lua match validates the packet, maintains health, checks forearm and shin shields, applies chip damage, accumulates guard strain, displaces a shield after a strong or repeated blow, and routes authoritative results and snapshots to both clients.
 
 Each client includes the attacking limb and measured endpoint speed. Nakama recomputes the impact damage from that speed for current clients, while older packets without the optional limb field remain capped and compatible with the probe and relay.
 
@@ -56,10 +59,11 @@ godot --headless --path . --script res://tests/online_probe.gd -- --url=ws://127
 
 ## Android export
 
-The checked-in `export_presets.cfg` contains the `Android Debug` preset with Internet permission and arm64 output. Configure Godot 4.3 to use JDK 17, the Android SDK, and the installed 4.3 export templates, then run:
+The checked-in `export_presets.cfg` contains the `Android Debug` preset with Internet permission and arm64 output. Configure Godot 4.5.2 to use JDK 17, the Android SDK, the installed Android NDK, and the matching 4.5.2 export templates, then run:
 
 ```bash
-./tools/export_android.sh
+GODOT_BIN=/Applications/Godot-4.5.2.app/Contents/MacOS/Godot ./tools/export_android.sh
+./tools/verify_android_16kb.sh exports/Faceoff-debug.apk
 ```
 
 Install `exports/Faceoff-debug.apk` on both devices. `adb devices` must show a device before using one-click deployment. The current workspace has a valid signed debug APK, but no Android device is attached for an install or touch-feel check.

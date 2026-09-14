@@ -9,6 +9,7 @@ signal connection_changed(connected: bool)
 signal slot_assigned(slot: int)
 signal remote_state_received(slot: int, state: Dictionary)
 signal remote_hit_received(slot: int, damage: float, speed: float, region: String, point: Vector2, blocked: bool, impact_damage: float)
+signal remote_fighter_selected(slot: int, fighter_id: String)
 signal peer_count_changed(count: int)
 
 const ServiceType = preload("res://scripts/systems/nakama_session_service.gd")
@@ -27,6 +28,7 @@ func _ready() -> void:
 	service.match_found.connect(_on_match_found)
 	service.remote_state_received.connect(_on_remote_state)
 	service.remote_hit_received.connect(_on_remote_hit)
+	service.remote_fighter_selected.connect(_on_remote_fighter_selected)
 	service.match_presence_received.connect(_on_match_presence)
 
 func connect_to_server(endpoint: String, device_id: String = "") -> void:
@@ -40,6 +42,19 @@ func submit_state(state: Dictionary) -> void:
 func submit_hit(target_slot: int, damage: float, speed: float, region: String, point: Vector2, blocked: bool = false, impact_damage: float = -1.0, attack_limb: String = "") -> void:
 	if service:
 		service.submit_hit(target_slot, damage, speed, region, point, blocked, impact_damage, attack_limb)
+
+func submit_fighter_selection(fighter_id: String) -> void:
+	if service:
+		service.submit_fighter_selection(fighter_id)
+
+func begin_quick_fight() -> bool:
+	if not service:
+		return false
+	return await service.begin_quick_fight()
+
+func cancel_quick_fight() -> void:
+	if service:
+		await service.cancel_quick_fight()
 
 func shutdown() -> void:
 	if service:
@@ -67,6 +82,9 @@ func _on_remote_state(slot: int, state: Dictionary) -> void:
 
 func _on_remote_hit(slot: int, damage: float, speed: float, region: String, point: Vector2, blocked: bool, impact_damage: float) -> void:
 	remote_hit_received.emit(slot, damage, speed, region, point, blocked, impact_damage)
+
+func _on_remote_fighter_selected(slot: int, fighter_id: String) -> void:
+	remote_fighter_selected.emit(slot, fighter_id)
 
 func _on_match_presence(joins: Array, leaves: Array) -> void:
 	peer_count_changed.emit(maxi(0, 1 + joins.size() - leaves.size()))

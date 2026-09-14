@@ -24,14 +24,14 @@ func _gui_input(event: InputEvent) -> void:
 			_reset()
 	elif event is InputEventScreenDrag:
 		_update_knob(event.position - global_position)
-	elif event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+	elif event is InputEventMouseButton and not OS.has_feature("mobile") and event.button_index == MOUSE_BUTTON_LEFT:
 		if event.pressed:
 			touching = true
 			_update_knob(event.position)
 		else:
 			touching = false
 			_reset()
-	elif event is InputEventMouseMotion and touching:
+	elif event is InputEventMouseMotion and not OS.has_feature("mobile") and touching:
 		_update_knob(event.position)
 
 func _update_knob(point: Vector2) -> void:

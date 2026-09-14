@@ -14,4 +14,4 @@ keystores/*.p12
 keystores/*.env
 keystores/*.txt
 .godot/export_credentials.cfg
-android/
+/android/

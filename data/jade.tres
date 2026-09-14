@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="CharacterProfile" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/characters/character_profile.gd" id="1_profile"]
+
+[resource]
+script = ExtResource("1_profile")
+display_name = "Jade"
+tagline = "silk over steel"
+primary_color = Color(0.12, 0.37, 0.32, 1)
+secondary_color = Color(0.96, 0.9, 0.79, 1)
+accent_color = Color(0.84, 0.62, 0.2, 1)
+face_default = ":|"
+face_love = "<3"
+face_shock = "O_O"
+face_laughter = "HA!"
+face_anger = ">:["
+face_confusion = "?"
+face_celebration = "★"
+chest_quirk = "FLOW"
+quirk_line = "never wrinkles under pressure"
+visual_style = "jade"

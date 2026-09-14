@@ -1,7 +1,8 @@
 extends SceneTree
 
 ## Headless integration probe for the real Nakama transport.
-## Run with a local Nakama on NAKAMA_PORT (default 7350) and two clients.
+## Run with a local Nakama on NAKAMA_PORT (default 7350) and two clients, or
+## set NAKAMA_ENDPOINT or pass -- --endpoint=... to exercise a deployed endpoint.
 
 const Service = preload("res://scripts/systems/nakama_session_service.gd")
 
@@ -15,35 +16,93 @@ var first_hit_damage := -1.0
 var second_hit_damage := -1.0
 var first_guard_displaced := false
 var second_guard_displaced := false
+var first_remote_fighter := ""
+var second_remote_fighter := ""
 var first_last_state: Dictionary = {}
 var second_last_state: Dictionary = {}
+var first_authenticated := false
+var second_authenticated := false
 var elapsed := 0.0
+var requested_endpoint := ""
 
 func _init() -> void:
 	call_deferred("_run")
 
 func _run() -> void:
+	requested_endpoint = OS.get_environment("NAKAMA_ENDPOINT").strip_edges()
+	for argument in OS.get_cmdline_user_args():
+		var value := String(argument)
+		if value.begins_with("--endpoint="):
+			requested_endpoint = value.trim_prefix("--endpoint=").strip_edges()
+	var local_probe := requested_endpoint.is_empty()
 	first = Service.new()
 	second = Service.new()
 	root.add_child(first)
 	root.add_child(second)
+	# Matchmaking starts only after the player presses the Quick Fight button.
+	# Keep device auth here so both probe clients have distinct identities.
+	first.automatic_matchmaking = false
+	second.automatic_matchmaking = false
+	# The project setting intentionally contains the production key for release
+	# exports. Local Docker uses its own development key, so make this probe
+	# self-contained when no deployed endpoint was requested.
+	if local_probe and OS.get_environment("FACE_OFF_ONLINE_SERVER_KEY").strip_edges().is_empty():
+		first.server_key = "devserverkey"
+		second.server_key = "devserverkey"
 	first.remote_state_received.connect(_on_first_state)
 	second.remote_state_received.connect(_on_second_state)
 	first.remote_hit_received.connect(_on_first_hit)
 	second.remote_hit_received.connect(_on_second_hit)
+	first.remote_fighter_selected.connect(func(_slot: int, fighter_id: String): first_remote_fighter = fighter_id)
+	second.remote_fighter_selected.connect(func(_slot: int, fighter_id: String): second_remote_fighter = fighter_id)
+	first.session_ready.connect(func(_details: Dictionary): first_authenticated = true)
+	second.session_ready.connect(func(_details: Dictionary): second_authenticated = true)
 	first.network_error.connect(_on_network_error.bind("one"))
 	second.network_error.connect(_on_network_error.bind("two"))
-	var port := int(OS.get_environment("NAKAMA_PORT"))
-	if port <= 0:
-		port = 7350
-	var endpoint := "nakama://127.0.0.1:%d" % port
+	var endpoint := requested_endpoint
+	if endpoint.is_empty():
+		var port := int(OS.get_environment("NAKAMA_PORT"))
+		if port <= 0:
+			port = 7350
+		endpoint = "nakama://127.0.0.1:%d" % port
+	# Authenticate clients sequentially. The SDK shares one HTTP adapter, and
+	# starting two TLS requests in the same frame can race on slower hosts.
 	first.connect_to_server(endpoint, "faceoff-probe-one-%d" % Time.get_ticks_msec())
+	var auth_wait := 0.0
+	while auth_wait < 10.0 and not first_authenticated:
+		await create_timer(0.1).timeout
+		auth_wait += 0.1
+	if not first_authenticated:
+		_fail("first client did not authenticate")
+		return
 	second.connect_to_server(endpoint, "faceoff-probe-two-%d" % Time.get_ticks_msec())
+	var second_auth_wait := 0.0
+	while second_auth_wait < 10.0 and (not second_authenticated or not first.connected or not second.connected):
+		await create_timer(0.1).timeout
+		second_auth_wait += 0.1
+	if not first.connected or not second.connected:
+		_fail("Quick Fight clients did not connect: %s/%s" % [first.connected, second.connected])
+		return
+	if not await first.begin_quick_fight():
+		_fail("first Quick Fight search did not start")
+		return
+	if not await second.begin_quick_fight():
+		_fail("second Quick Fight search did not start")
+		return
 	while elapsed < 20.0 and (first.player_slot == 0 or second.player_slot == 0):
 		await create_timer(0.1).timeout
 		elapsed += 0.1
 	if first.player_slot == 0 or second.player_slot == 0:
 		_fail("slots were not assigned: %d/%d" % [first.player_slot, second.player_slot])
+		return
+	first.submit_fighter_selection("jade")
+	second.submit_fighter_selection("oculon")
+	var fighter_wait := 0.0
+	while fighter_wait < 5.0 and (first_remote_fighter.is_empty() or second_remote_fighter.is_empty()):
+		await create_timer(0.1).timeout
+		fighter_wait += 0.1
+	if first_remote_fighter != "oculon" or second_remote_fighter != "jade":
+		_fail("fighter selection was not synchronized: %s/%s" % [first_remote_fighter, second_remote_fighter])
 		return
 	first.submit_state(_state(Vector2(360, 459)))
 	second.submit_state(_state(Vector2(600, 459)))

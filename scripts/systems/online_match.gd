@@ -9,6 +9,7 @@ signal connection_changed(connected: bool)
 signal slot_assigned(slot: int)
 signal remote_state_received(slot: int, state: Dictionary)
 signal remote_hit_received(slot: int, damage: float, speed: float, region: String, point: Vector2, blocked: bool, impact_damage: float)
+signal remote_fighter_selected(slot: int, fighter_id: String)
 signal peer_count_changed(count: int)
 
 const DEFAULT_PORT := 9100
@@ -24,6 +25,7 @@ var sequence := 0
 var slot_by_peer: Dictionary = {}
 var peer_by_slot: Dictionary = {}
 var last_sequence_by_slot: Dictionary = {}
+var fighter_by_slot: Dictionary = {}
 
 func start_server(port: int = DEFAULT_PORT) -> int:
 	shutdown()
@@ -72,6 +74,7 @@ func shutdown() -> void:
 	slot_by_peer.clear()
 	peer_by_slot.clear()
 	last_sequence_by_slot.clear()
+	fighter_by_slot.clear()
 
 func _process(delta: float) -> void:
 	if is_server and connected:
@@ -115,6 +118,11 @@ func _on_peer_connected(peer_id: int) -> void:
 	slot_by_peer[peer_id] = slot
 	peer_by_slot[slot] = peer_id
 	rpc_id(peer_id, "_assign_slot", slot)
+	for existing_slot in fighter_by_slot.keys():
+		_receive_fighter_selection.rpc_id(peer_id, {
+			"slot": int(existing_slot),
+			"fighter_id": String(fighter_by_slot[existing_slot]),
+		})
 	peer_count_changed.emit(slot_by_peer.size())
 	status_changed.emit("PLAYER %d CONNECTED (%d/%d)" % [slot, slot_by_peer.size(), FaceoffNetworkProtocol.MAX_PLAYERS])
 
@@ -126,6 +134,7 @@ func _on_peer_disconnected(peer_id: int) -> void:
 	if slot > 0:
 		peer_by_slot.erase(slot)
 		last_sequence_by_slot.erase(slot)
+		fighter_by_slot.erase(slot)
 	peer_count_changed.emit(slot_by_peer.size())
 	status_changed.emit("PLAYER %d DISCONNECTED" % slot if slot > 0 else "PEER DISCONNECTED")
 
@@ -146,6 +155,11 @@ func submit_hit(target_slot: int, damage: float, speed: float, region: String, p
 	var event := {"kind": "hit", "target_slot": target_slot, "damage": damage, "impact_damage": impact_damage if impact_damage >= 0.0 else damage, "blocked": blocked, "speed": speed, "region": region, "point": point, "attack_limb": attack_limb}
 	if FaceoffNetworkProtocol.validate_hit(event):
 		_submit_event.rpc_id(1, event)
+
+func submit_fighter_selection(fighter_id: String) -> void:
+	if is_server or not connected or player_slot == 0 or not FaceoffNetworkProtocol.is_valid_fighter(fighter_id):
+		return
+	_submit_fighter_selection.rpc_id(1, fighter_id)
 
 @rpc("any_peer", "call_remote", "reliable")
 func _submit_state(state: Dictionary) -> void:
@@ -185,6 +199,21 @@ func _submit_event(event: Dictionary) -> void:
 	packet["attacker_slot"] = sender_slot
 	_receive_event.rpc_id(int(peer_by_slot[target_slot]), packet)
 
+@rpc("any_peer", "call_remote", "reliable")
+func _submit_fighter_selection(fighter_id: String) -> void:
+	if not is_server or not FaceoffNetworkProtocol.is_valid_fighter(fighter_id):
+		return
+	var sender := multiplayer.get_remote_sender_id()
+	var slot := int(slot_by_peer.get(sender, 0))
+	if slot == 0:
+		return
+	fighter_by_slot[slot] = fighter_id
+	var packet := {"slot": slot, "fighter_id": fighter_id}
+	for destination in peer_by_slot.keys():
+		var destination_id := int(peer_by_slot[destination])
+		if destination_id != sender:
+			_receive_fighter_selection.rpc_id(destination_id, packet)
+
 @rpc("authority", "call_remote", "reliable")
 func _receive_event(event: Dictionary) -> void:
 	if is_server or String(event.get("kind", "")) != "hit":
@@ -199,6 +228,15 @@ func _receive_event(event: Dictionary) -> void:
 		bool(event.get("blocked", false)),
 		float(event.get("impact_damage", event.get("damage", 0.0)))
 	)
+
+@rpc("authority", "call_remote", "reliable")
+func _receive_fighter_selection(packet: Dictionary) -> void:
+	if is_server:
+		return
+	var slot := int(packet.get("slot", 0))
+	var fighter_id := String(packet.get("fighter_id", ""))
+	if slot > 0 and slot != player_slot and FaceoffNetworkProtocol.is_valid_fighter(fighter_id):
+		remote_fighter_selected.emit(slot, fighter_id)
 
 @rpc("authority", "call_remote", "reliable")
 func _assign_slot(slot: int) -> void:
