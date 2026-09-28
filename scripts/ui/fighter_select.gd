@@ -106,11 +106,15 @@ func _build() -> void:
 	active_label = _label("SELECT P1", Vector2(600, 72), 11, Color("f5edda"))
 	active_label.size = Vector2(316, 20)
 	active_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	var columns := 3 if RosterType.IDS.size() > 4 else 2
+	var card_width := 300.0 if columns == 3 else 442.0
+	var card_step := 310.0 if columns == 3 else 458.0
+	var text_width := 150.0 if columns == 3 else 170.0
 	for i in RosterType.IDS.size():
 		var id: String = RosterType.IDS[i]
-		var column := i % 2
-		var row := i / 2
-		var card := _button("", Vector2(30 + column * 458, 112 + row * 168), Vector2(442, 150), Color("11152b"), Color("3c456e"))
+		var column := i % columns
+		var row := i / columns
+		var card := _button("", Vector2(30 + column * card_step, 112 + row * 168), Vector2(card_width, 150), Color("11152b"), Color("3c456e"))
 		card.name = "FighterCard_" + id
 		card.pressed.connect(_on_card_pressed.bind(id))
 		var head := TextureRect.new()
@@ -121,8 +125,8 @@ func _build() -> void:
 		head.texture = RosterType.head(id)
 		head.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		card.add_child(head)
-		var name_label := _child_label(card, RosterType.profile(id).display_name.to_upper(), Vector2(108, 20), Vector2(170, 28), 19, Color("f5edda"))
-		var tagline := _child_label(card, RosterType.profile(id).tagline, Vector2(108, 52), Vector2(168, 42), 12, Color("9ba7d0"))
+		var name_label := _child_label(card, RosterType.profile(id).display_name.to_upper(), Vector2(108, 20), Vector2(text_width, 28), 19, Color("f5edda"))
+		var tagline := _child_label(card, RosterType.profile(id).tagline, Vector2(108, 52), Vector2(text_width, 42), 12, Color("9ba7d0"))
 		tagline.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		var swatch := ColorRect.new()
 		swatch.position = Vector2(108, 105)

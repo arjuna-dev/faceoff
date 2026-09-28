@@ -1,0 +1,18 @@
+{
+  "schema_version":3, "fighter_id":"batyr", "body_type":"standard",
+  "source":"assets/fighters/arcade/Batyr-rig-repaired-raw.png",
+  "parts":{
+    "head":{"rect":[16,12,384,388],"pivot":[243,280],"tip":[243,123],"outline":[[16,12],[384,12],[384,280],[275,280],[268,316],[224,316],[218,289],[169,289],[136,250],[16,250]],"outline_reason":"The old head image includes a duplicate shoulder bust. Keep the head, fur and neck; shoulder artwork belongs to torso."},
+    "torso":{"rect":[416,12,1008,388],"pivot":[640,145],"tip":[640,326]},
+    "left_upper_arm":{"rect":[16,390,256,744],"pivot":[168,450],"tip":[95,618]},
+    "left_forearm":{"rect":[256,390,512,744],"pivot":[378,481],"tip":[333,680]},
+    "right_upper_arm":{"rect":[784,390,1008,744],"pivot":[853,458],"tip":[934,619]},
+    "right_forearm":{"rect":[528,390,776,744],"pivot":[639,481],"tip":[695,680]},
+    "left_thigh":{"rect":[16,744,512,1156],"pivot":[323,806],"tip":[290,1100]},
+    "right_thigh":{"rect":[528,744,1008,1156],"pivot":[702,806],"tip":[734,1100]},
+    "left_shin":{"rect":[16,1156,248,1516],"pivot":[145,1210],"tip":[143,1345]},
+    "right_shin":{"rect":[784,1156,1008,1516],"pivot":[865,1210],"tip":[865,1345]},
+    "left_boot":{"rect":[260,1156,516,1516],"pivot":[351,1230],"tip":[350,1408]},
+    "right_boot":{"rect":[540,1156,784,1516],"pivot":[630,1236],"tip":[630,1410]}
+  }
+}

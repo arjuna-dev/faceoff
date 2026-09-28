@@ -15,3 +15,9 @@ keystores/*.env
 keystores/*.txt
 .godot/export_credentials.cfg
 /android/
+
+# Local Python environments and caches
+.venv/
+__pycache__/
+*.pyc
+*~

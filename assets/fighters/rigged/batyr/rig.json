@@ -1,0 +1,179 @@
+{
+  "version": 3,
+  "fighter_id": "batyr",
+  "canvas": [
+    1024,
+    1536
+  ],
+  "source": "/Users/alejandrocamus/Documents/Faceoff/assets/fighters/arcade/Batyr-rig-repaired-raw.png",
+  "source_sha256": "362345a099254148c463a59efea1a6858c9bd6c723588c349421327e7e979288",
+  "binding_sha256": "477d724df86c1011bd2cea2dfb927ae8231749bb7f5a14d1464621ead2efc21a",
+  "contract_sha256": "60fb1ef8ff61456bda7119a4966910d70310b6750c982f300cd638b4ed5d0419",
+  "profile_sha256": "c7a092020f116623a6de81e51801f8e1fd9160ef0211fea48c0d674dbcae93f4",
+  "foreground_pixels": 328138,
+  "cropped_foreground_pixels": 0,
+  "resampled": true,
+  "slots": {
+    "torso": {
+      "rect": [
+        400,
+        16,
+        1008,
+        368
+      ],
+      "texture": "torso.png",
+      "margin": 32,
+      "pixels": 36061,
+      "excluded_duplicate_bust_pixels": 0
+    },
+    "head": {
+      "rect": [
+        16,
+        16,
+        384,
+        368
+      ],
+      "texture": "head.png",
+      "margin": 37,
+      "pixels": 22955,
+      "excluded_duplicate_bust_pixels": 0
+    },
+    "left_upper_arm": {
+      "rect": [
+        16,
+        384,
+        256,
+        736
+      ],
+      "texture": "left_upper_arm.png",
+      "margin": 13,
+      "pixels": 25736,
+      "excluded_duplicate_bust_pixels": 0
+    },
+    "left_forearm": {
+      "rect": [
+        272,
+        384,
+        512,
+        736
+      ],
+      "texture": "left_forearm.png",
+      "margin": 24,
+      "pixels": 20308,
+      "excluded_duplicate_bust_pixels": 0
+    },
+    "right_upper_arm": {
+      "rect": [
+        528,
+        384,
+        768,
+        736
+      ],
+      "texture": "right_upper_arm.png",
+      "margin": 20,
+      "pixels": 25207,
+      "excluded_duplicate_bust_pixels": 0
+    },
+    "right_forearm": {
+      "rect": [
+        784,
+        384,
+        1008,
+        736
+      ],
+      "texture": "right_forearm.png",
+      "margin": 26,
+      "pixels": 18821,
+      "excluded_duplicate_bust_pixels": 0
+    },
+    "left_thigh": {
+      "rect": [
+        16,
+        752,
+        496,
+        1136
+      ],
+      "texture": "left_thigh.png",
+      "margin": 31,
+      "pixels": 32986,
+      "excluded_duplicate_bust_pixels": 0
+    },
+    "right_thigh": {
+      "rect": [
+        512,
+        752,
+        1008,
+        1136
+      ],
+      "texture": "right_thigh.png",
+      "margin": 31,
+      "pixels": 32751,
+      "excluded_duplicate_bust_pixels": 0
+    },
+    "left_shin": {
+      "rect": [
+        16,
+        1152,
+        240,
+        1520
+      ],
+      "texture": "left_shin.png",
+      "margin": 28,
+      "pixels": 31575,
+      "excluded_duplicate_bust_pixels": 0
+    },
+    "right_shin": {
+      "rect": [
+        512,
+        1152,
+        752,
+        1520
+      ],
+      "texture": "right_shin.png",
+      "margin": 29,
+      "pixels": 31647,
+      "excluded_duplicate_bust_pixels": 0
+    },
+    "left_boot": {
+      "rect": [
+        256,
+        1152,
+        496,
+        1520
+      ],
+      "texture": "left_boot.png",
+      "margin": 12,
+      "pixels": 24657,
+      "excluded_duplicate_bust_pixels": 0
+    },
+    "right_boot": {
+      "rect": [
+        768,
+        1152,
+        1008,
+        1520
+      ],
+      "texture": "right_boot.png",
+      "margin": 14,
+      "pixels": 25131,
+      "excluded_duplicate_bust_pixels": 0
+    }
+  },
+  "textures_sha256": {
+    "torso": "c6732f0724a90ba8de0c7c3104d1ac70c3bef2566b2a63ee5ad49682fc6e5dad",
+    "head": "27d4b8166670e3438d530b30e10c95822f35ab2f5f54498705df2fc37331311c",
+    "left_upper_arm": "7f8d55fbb201447a07994f5b8ec957fe7192eefd94de432f540138a4b00f1d3a",
+    "left_forearm": "1e7d3de761d0600749f2c7dcff36d76f7bed5319527c6b02f7b9c14ae9de5fcd",
+    "right_upper_arm": "6e49ae0251880f0a427277833349cdcd8768e8a881645a6454d84be518f8dab8",
+    "right_forearm": "dcd4956971e431f1b224c8ccda609a5559cf3ce58183f9a6199de2a8e13b0a47",
+    "left_thigh": "fa7e930086110d17bc52f69623b9412e03bfb58ef1d8e1db6f7c4ce3faf6d38c",
+    "right_thigh": "4f798c4fa3f508289736902728df8dacaba06ff784bcc6565ff31b0b3e3a8375",
+    "left_shin": "3604afc24587953e96db990d79b87cf56c8683d2914314e088d569453ed44e46",
+    "right_shin": "079dfc9913312d6c433b6eb9f97820e42ec4448c44d34cf21c6e6adcf3fddbb4",
+    "left_boot": "60709a78a92c8b0e7aa0a6a4cf29ee7cb8dd3f29ba1fb9dbcef061e3a5c1372e",
+    "right_boot": "212cf4399b57c9cf764356867acd712c9eb9bf1d7e089feb5e45f189a606dc01"
+  },
+  "excluded_duplicate_bust_pixels": 7322,
+  "sheet": "assets/fighters/arcade/Batyr.png",
+  "sheet_sha256": "d483a2c28843773893040f3ae9840b97766db094ff17d830d6a6a20d2ba6c9c8"
+}

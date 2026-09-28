@@ -1,10 +1,16 @@
 # Faceoff
 
+Character generation and rigging: [workflow, templates and validation](docs/character-generation.md).
+
 Build and install commands:
+
+#Android debug and flash
+./tools/install_android_debug.sh exports/Faceoff-debug.apk --replace-on-signature-mismatch 
 
 ```bash
 # Android debug APK. Use the matching Godot 4.5.2 editor.
 GODOT_BIN=/Applications/Godot-4.5.2.app/Contents/MacOS/Godot ./tools/export_android.sh
+./tools/install_android_debug.sh exports/Faceoff-debug.apk --replace-on-signature-mismatch
 
 # Android release APK and Google Play App Bundle
 GODOT_BIN=/Applications/Godot-4.5.2.app/Contents/MacOS/Godot ./tools/export_android_release.sh

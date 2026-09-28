@@ -1,0 +1,13 @@
+{
+  "decision": "accepted",
+  "reviewer": "codex",
+  "notes": "Inspected production pose and body-type matrices after shared runtime changes. Legacy rendering and equal forward arm reach retained.",
+  "rig_sha256": "d3510e51fe4005986c807cbd3e13bc9d882ea22accf8fb33d0a36840a858f44c",
+  "runtime_sha256": "b68f7969d6fd53f13f3a5f0f6c6729247b9e0f304d4feebca1632b3ff1590a22",
+  "captures": {
+    "builds/fighters/oculon/review_preserved_runtime/poses.png": "ee004a6aa7c4fa92a747e8c30212789c72c8e710f19a7e4d3777ae46866861e0",
+    "builds/fighters/oculon/review_preserved_runtime/body-types.png": "c97602b52b19ef270b2358c1dcf8cf94fdcd0e06b6ba262cabd10260a5afd7e2",
+    "builds/fighters/oculon/review_preserved_runtime/capture.json": "e70e995fbbc941cee5eada9900acb69f7803ec57089127f2d371251715069f82",
+    "builds/fighters/oculon/review_preserved_runtime/mechanics.json": "778c7da7f31cafee0fcb9641b90cd1d9f36ae8565b2217502351b5f7e96dc3f5"
+  }
+}

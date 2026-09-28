@@ -1,0 +1,179 @@
+{
+  "version": 3,
+  "fighter_id": "armk",
+  "canvas": [
+    1024,
+    1536
+  ],
+  "source": "/Users/alejandrocamus/Documents/Faceoff/assets/fighters/rigged/armk/imported_source.png",
+  "source_sha256": "6e17b0936bba19a1fd04c387243887be22182e4a8294e43ebb6394ebdb29fff7",
+  "binding_sha256": "8473372ceb15b094bd994206cc2859724893f97146a2de8593c03a6ccc95271b",
+  "contract_sha256": "60fb1ef8ff61456bda7119a4966910d70310b6750c982f300cd638b4ed5d0419",
+  "profile_sha256": "f926ddc998c0406d8d6613dc7f6da873449166622d5d77e79ba4836069a420c2",
+  "foreground_pixels": 585476,
+  "cropped_foreground_pixels": 0,
+  "resampled": false,
+  "slots": {
+    "torso": {
+      "rect": [
+        455,
+        0,
+        981,
+        382
+      ],
+      "texture": "torso.png",
+      "margin": 4,
+      "pixels": 139614,
+      "excluded_duplicate_bust_pixels": 0
+    },
+    "head": {
+      "rect": [
+        23,
+        0,
+        455,
+        382
+      ],
+      "texture": "head.png",
+      "margin": 4,
+      "pixels": 75649,
+      "excluded_duplicate_bust_pixels": 0
+    },
+    "left_upper_arm": {
+      "rect": [
+        4,
+        382,
+        257,
+        752
+      ],
+      "texture": "left_upper_arm.png",
+      "margin": 4,
+      "pixels": 32642,
+      "excluded_duplicate_bust_pixels": 0
+    },
+    "left_forearm": {
+      "rect": [
+        257,
+        382,
+        511,
+        752
+      ],
+      "texture": "left_forearm.png",
+      "margin": 4,
+      "pixels": 28735,
+      "excluded_duplicate_bust_pixels": 0
+    },
+    "right_upper_arm": {
+      "rect": [
+        766,
+        382,
+        1002,
+        752
+      ],
+      "texture": "right_upper_arm.png",
+      "margin": 4,
+      "pixels": 32337,
+      "excluded_duplicate_bust_pixels": 0
+    },
+    "right_forearm": {
+      "rect": [
+        511,
+        382,
+        766,
+        752
+      ],
+      "texture": "right_forearm.png",
+      "margin": 4,
+      "pixels": 28707,
+      "excluded_duplicate_bust_pixels": 0
+    },
+    "left_thigh": {
+      "rect": [
+        136,
+        752,
+        508,
+        1143
+      ],
+      "texture": "left_thigh.png",
+      "margin": 4,
+      "pixels": 59786,
+      "excluded_duplicate_bust_pixels": 0
+    },
+    "right_thigh": {
+      "rect": [
+        508,
+        752,
+        887,
+        1143
+      ],
+      "texture": "right_thigh.png",
+      "margin": 4,
+      "pixels": 59930,
+      "excluded_duplicate_bust_pixels": 0
+    },
+    "left_shin": {
+      "rect": [
+        53,
+        1143,
+        252,
+        1505
+      ],
+      "texture": "left_shin.png",
+      "margin": 4,
+      "pixels": 36369,
+      "excluded_duplicate_bust_pixels": 0
+    },
+    "right_shin": {
+      "rect": [
+        508,
+        1143,
+        759,
+        1505
+      ],
+      "texture": "right_shin.png",
+      "margin": 10,
+      "pixels": 36239,
+      "excluded_duplicate_bust_pixels": 0
+    },
+    "left_boot": {
+      "rect": [
+        252,
+        1143,
+        508,
+        1505
+      ],
+      "texture": "left_boot.png",
+      "margin": 4,
+      "pixels": 27635,
+      "excluded_duplicate_bust_pixels": 0
+    },
+    "right_boot": {
+      "rect": [
+        759,
+        1143,
+        1005,
+        1505
+      ],
+      "texture": "right_boot.png",
+      "margin": 4,
+      "pixels": 27833,
+      "excluded_duplicate_bust_pixels": 0
+    }
+  },
+  "textures_sha256": {
+    "torso": "7565b79d1f3f2f1f1fd42671e0580901baeb50d8373ad089a8de30900b7c7bf3",
+    "head": "6d4a49fa53c10944de6391a2823140032f75ef27e808ca189a586a0c4eef3b8f",
+    "left_upper_arm": "d57799359d079d79a2442e55130969f7b985b5e6d0afa76d0e4725529de6ffc3",
+    "left_forearm": "5730043182fca8140f4e6e8a047d0f06d12ce2ea9ef190b6902813ab3a9fbbed",
+    "right_upper_arm": "0456619d648b872ecabf8383fc082fa7aa0398508fb2820c1d53d963b2a90ab9",
+    "right_forearm": "5d71def65207168882f75194d3272e1577142e228c575b6455416fa5ad019381",
+    "left_thigh": "049bb3cbfb41258a17baf82bd7baadd305a401afcc388f752924fb21bac7b8ad",
+    "right_thigh": "56bf9cb3ec9d52600215362eaf44951010bd83141f8a0394b863e2499ea9452d",
+    "left_shin": "d1056204e1f8c60cb87926fff52156aaaffa969fee7604617a444ed94157c359",
+    "right_shin": "5a91f34ad77b039d15ab5cba7c40245b4ac8618acb729dbafa2d3c1ca0073f2f",
+    "left_boot": "e2e0b4f2e0ea72dc3f6768f4e064fecd9bddadcb5e60924e700e7200a95c85b0",
+    "right_boot": "b31fcb7ce76b06e3b347227dbfc095f856056541f5aad9304bfbb9722899900b"
+  },
+  "excluded_duplicate_bust_pixels": 0,
+  "sheet": "assets/fighters/rigged/armk/sheet.png",
+  "sheet_sha256": "6e17b0936bba19a1fd04c387243887be22182e4a8294e43ebb6394ebdb29fff7"
+}

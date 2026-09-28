@@ -1,0 +1,18 @@
+{
+  "schema_version":3, "fighter_id":"oculon", "body_type":"broad",
+  "source":"assets/fighters/arcade/Oculon-rig-repaired-raw.png",
+  "parts":{
+    "head":{"rect":[16,12,384,388],"pivot":[242,293],"tip":[242,126],"outline":[[16,12],[384,12],[384,266],[278,266],[276,327],[222,327],[211,268],[169,241],[16,241]],"outline_reason":"The old head image includes a duplicate shoulder bust. Keep the complete head and neck; shoulder artwork belongs to torso."},
+    "torso":{"rect":[416,12,1008,388],"pivot":[689,150],"tip":[689,352]},
+    "left_upper_arm":{"rect":[16,390,256,744],"pivot":[170,460],"tip":[92,646]},
+    "left_forearm":{"rect":[256,390,512,744],"pivot":[400,477],"tip":[349,686]},
+    "right_upper_arm":{"rect":[784,390,1008,744],"pivot":[847,459],"tip":[923,646]},
+    "right_forearm":{"rect":[528,390,776,744],"pivot":[612,477],"tip":[667,686]},
+    "left_thigh":{"rect":[16,744,512,1156],"pivot":[345,799],"tip":[237,1090]},
+    "right_thigh":{"rect":[528,744,1008,1156],"pivot":[679,799],"tip":[787,1090]},
+    "left_shin":{"rect":[16,1156,248,1516],"pivot":[141,1203],"tip":[141,1347]},
+    "right_shin":{"rect":[528,1156,768,1516],"pivot":[641,1203],"tip":[641,1347]},
+    "left_boot":{"rect":[260,1156,516,1516],"pivot":[346,1205],"tip":[346,1408]},
+    "right_boot":{"rect":[776,1156,1016,1516],"pivot":[846,1205],"tip":[846,1408]}
+  }
+}

@@ -1,0 +1,30 @@
+Create one original adult human angel for a 1990s arcade fighting game.
+
+Character identity: a beautiful human angel with handsome facial features, long
+blonde fluffy hair with soft volume, a fabric bandana worn on his head, white
+feathered wings attached naturally to the upper back, many tattoos including one clearly readable cupid tattoo, several
+ear and facial piercings, a bare tattooed torso with no T-shirt, tight blue jeans,
+and low-top sneaker shoes.
+
+Art direction: detailed hand-pixelled 1990s arcade fighter sprite art, crisp dark
+colored outlines, clustered pixel shading, readable anatomy and clothing at game
+scale. Avoid photorealistic rendering, glossy 3D, soft concept art, modern fashion
+illustration, scenery, cast shadows, labels, text or extra subjects.
+
+Hair and bandana belong only to the head piece. Keep all fluffy hair strands and
+bandana fabric, including any tied ends, fully visible inside the head cell.
+
+The wings belong only to the torso piece. Show every part completely; nothing
+may be clipped.
+
+The thighs contain only jeans-covered hip-to-knee sections, with no additional
+waistband, pelvis or belt. The shins contain only jeans-covered knee-to-ankle
+sections. Each shin ends at a cut trouser cuff around the ankle: no shoe, toe,
+outsole, shoe tongue or laces may appear under that cuff. The shin and sneaker
+are separate detached objects, not a complete leg duplicated alongside a shoe.
+
+Each foot cell contains only one complete low-top sneaker below the ankle,
+including the toe, instep, small shoe collar and continuous flat outsole.
+No jeans, trouser leg, bare shin, tall cuff, boot shaft, raised heel, separate
+heel block or neighboring body part belongs in a sneaker cell. Both sneakers
+point right in the source image. Leave background clearance around every sneaker.

@@ -77,6 +77,8 @@ fi
 export GODOT_ANDROID_TEMPLATE_VERSION="$godot_android_version"
 export FACEOFF_ANDROID_ABIS="${FACEOFF_ANDROID_ABIS:-arm64-v8a}"
 
+"${RIG_PYTHON:-python3}" "$project_root/tools/verify_rigged_assets.py" --hash-only --require-review
+
 is_jdk17() {
     [[ -x "$1/bin/java" ]] && "$1/bin/java" -version 2>&1 | grep -Eq 'version "17([.\"])'
 }

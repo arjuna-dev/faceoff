@@ -1,0 +1,112 @@
+{
+  "fighter": "magician",
+  "base_image": "../base.png",
+  "base_canvas": [
+    1254,
+    1254
+  ],
+  "base_bbox": [
+    198,
+    54,
+    1063,
+    1173
+  ],
+  "note": "Frames and origin are in base-canvas pixels; the base bbox bottom is the ground line.",
+  "animations": [
+    {
+      "state": "charge",
+      "label": "CHARGE",
+      "frames": [
+        "charge/frame_00.png",
+        "charge/frame_01.png",
+        "charge/frame_02.png",
+        "charge/frame_03.png",
+        "charge/frame_04.png",
+        "charge/frame_05.png"
+      ],
+      "durations_ms": [
+        150,
+        150,
+        150,
+        150,
+        150,
+        260
+      ],
+      "origin": [
+        121,
+        103
+      ],
+      "frame_size": [
+        1077,
+        1137
+      ],
+      "scale_from_source": 2.2199,
+      "source": "chatgpt",
+      "preview": "charge/preview.gif"
+    },
+    {
+      "state": "hit-stun",
+      "label": "HIT STUN",
+      "frames": [
+        "hit-stun/frame_00.png",
+        "hit-stun/frame_01.png",
+        "hit-stun/frame_02.png",
+        "hit-stun/frame_03.png",
+        "hit-stun/frame_04.png",
+        "hit-stun/frame_05.png",
+        "hit-stun/frame_06.png",
+        "hit-stun/frame_07.png"
+      ],
+      "durations_ms": [
+        140,
+        140,
+        140,
+        140,
+        140,
+        140,
+        140,
+        240
+      ],
+      "origin": [
+        96,
+        46
+      ],
+      "frame_size": [
+        1200,
+        1127
+      ],
+      "scale_from_source": 2.7099,
+      "source": "chatgpt",
+      "preview": "hit-stun/preview.gif"
+    },
+    {
+      "state": "jump",
+      "label": "JUMP",
+      "frames": [
+        "jump/frame_00.png",
+        "jump/frame_01.png",
+        "jump/frame_02.png",
+        "jump/frame_03.png",
+        "jump/frame_04.png"
+      ],
+      "durations_ms": [
+        140,
+        140,
+        140,
+        140,
+        280
+      ],
+      "origin": [
+        -78,
+        -170
+      ],
+      "frame_size": [
+        1343,
+        1343
+      ],
+      "scale_from_source": 5.248,
+      "source": "gemini-3-pro-image",
+      "preview": "jump/preview.gif"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+You are reviewing a twelve-part extraction for a 2D fighting game.
+Image 1 is the complete original character. Image 2 is a labeled contact sheet of the twelve extracted parts. The bright green cell backgrounds are not artwork.
+
+Inspect all twelve parts individually. Flag parts that are CLEARLY incomplete, including a large missing continuation, a region hidden by another body part, or a part reduced to a few scattered pixels. For the torso-and-wings part, always check two things separately: the chest and abdomen surface hidden beneath the arms, and the hole in the wing feathers where the head and hair covered the wings. The wings continue behind the head, so a wing cut-out around the head is a missing area; name it in the reason. Do not flag normal cuts at joints, transparent padding, tiny edge pixels, or uncertain cases. Do not repair any image in this call.
+
+For each flagged part, describe where its own artwork is clearly missing. Do not propose rectangles or repair pixels in this call. Return exactly JSON with this shape:
+{"broken_parts": [{"part": "exact part ID", "reason": "short visual evidence"}]}
+An empty list is valid. Valid part IDs: __PART_NAMES__.
+
+Original character creation prompt for identity and visual context:
+__CHARACTER_PROMPT__

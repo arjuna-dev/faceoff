@@ -1,0 +1,16 @@
+{
+  "head_neck": "the head and neck, including the face, hair, beard and anything worn on the head",
+  "torso_pelvis": "the chest, abdomen and pelvis, including the waistband area and clothing covering them, but never sleeves or anything covering the arms",
+  "near_upper_arm": "the near upper arm from its shoulder to its elbow, including any sleeve covering it",
+  "near_forearm_hand": "the near forearm and hand, from the elbow to the fingertips, including sleeves, cuffs and gloves",
+  "far_upper_arm": "the far upper arm from its shoulder to its elbow, including any sleeve covering it",
+  "far_forearm_hand": "the far forearm and hand, from the elbow to the fingertips, including sleeves, cuffs and gloves",
+  "near_thigh": "the near thigh from the hip to the knee, including the clothing covering it",
+  "near_shin": "the near shin from the knee to the ankle, including the clothing covering it",
+  "near_foot": "the whole near foot below the ankle: skin, toes and heel together with any footwear, whether shoes, boots, sandals or socks",
+  "far_thigh": "the far thigh from the hip to the knee, including the clothing covering it",
+  "far_shin": "the far shin from the knee to the ankle, including the clothing covering it",
+  "far_foot": "the whole far foot below the ankle: skin, toes and heel together with any footwear, whether shoes, boots, sandals or socks",
+  "back_accessory": "anything attached to the back that sits behind the torso and the far arm, such as wings, a cape or a backpack; unused when the character has nothing like that",
+  "held_item": "a weapon, staff, tool or prop held in a hand, but not the hand itself; unused when the character holds nothing"
+}

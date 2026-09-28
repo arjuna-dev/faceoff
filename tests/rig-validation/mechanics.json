@@ -1,0 +1,37 @@
+{
+  "body_types": [
+    "small",
+    "lean",
+    "standard",
+    "broad",
+    "heavy"
+  ],
+  "engine": "4.5.2-stable (official)",
+  "facings": [
+    -1,
+    1
+  ],
+  "failures": 0,
+  "passed": true,
+  "poses": [
+    "guard",
+    "left-punch",
+    "right-punch",
+    "walk",
+    "low-kick",
+    "high-kick",
+    "crouch",
+    "bow",
+    "arch",
+    "jump",
+    "hop",
+    "fall",
+    "get-up"
+  ],
+  "rigs": {
+    "batyr": "1e68074f3f75d66835e25a5c63f9c824f76b9490c31b410835056d4fd797e24b",
+    "oculon": "d3510e51fe4005986c807cbd3e13bc9d882ea22accf8fb33d0a36840a858f44c"
+  },
+  "runtime_sha256": "c415c080bdec1e1486f6d91654e0cca280a28a4d635795e0283a7e7602d39469",
+  "process_checked": true
+}

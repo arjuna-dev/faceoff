@@ -5,17 +5,29 @@ on:
   pull_request:
 
 jobs:
+  fighter-assets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: python -m pip install -r tools/requirements-rig.txt
+      - run: python tests/test_rig_sheet.py
+      - run: python tools/verify_rigged_assets.py --require-review
   godot:
     runs-on: ubuntu-latest
-    container: barichello/godot-ci:4.3
+    container: barichello/godot-ci:4.5.2
     steps:
       - uses: actions/checkout@v4
       - name: Parse project
         run: godot --headless --path . --editor --quit
       - name: Run core tests
-        run: godot --headless --path . -s tests/test_core.gd
+        run: python3 tools/run_godot_check.py godot --headless --path . -s tests/test_core.gd
       - name: Run gameplay tests
         run: |
-          godot --headless --path . -s tests/test_puppet_smoke.gd
-          godot --headless --path . -s tests/test_fighter_balance.gd
-          godot --headless --path . -s tests/test_combat_v3.gd
+          python3 tools/run_godot_check.py godot --headless --path . -s tests/test_puppet_smoke.gd
+          python3 tools/run_godot_check.py godot --headless --path . -s tests/test_fighter_balance.gd
+          python3 tools/run_godot_check.py godot --headless --path . -s tests/test_combat_v3.gd
+          python3 tools/run_godot_check.py godot --headless --path . -s tests/test_skeleton_rig.gd
+          python3 tools/run_godot_check.py godot --headless --path . -s tests/test_sprite_actions.gd

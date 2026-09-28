@@ -2,6 +2,7 @@ extends SceneTree
 
 const MainScene = preload("res://scenes/main.tscn")
 const ArcadeSkinType = preload("res://scripts/characters/arcade_skin.gd")
+const FighterRosterType = preload("res://scripts/characters/fighter_roster.gd")
 var failures := 0
 
 func _init() -> void:
@@ -20,7 +21,7 @@ func _run() -> void:
 	await process_frame
 	var screen: FighterSelect = main.fighter_select
 	check(screen.visible, "demo opens the fighter selection screen")
-	check(screen.card_buttons.size() == 4, "selection screen shows the live roster")
+	check(screen.card_buttons.size() == FighterRosterType.IDS.size(), "selection screen shows the live roster")
 	check(screen.player_id == "batyr" and screen.opponent_id == "kiro", "selection screen provides sensible defaults")
 	screen.card_buttons["jade"].emit_signal("pressed")
 	check(screen.player_id == "jade", "first card selection assigns P1")

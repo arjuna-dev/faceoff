@@ -1,0 +1,17 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1"><title>Sprites magician</title>
+<style>
+:root { --bg:#f6f6f4; --panel:#fff; --ink:#1d1f23; --muted:#626873; --line:#dcdcd6; --code:#f1f1ee; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg:#15171b; --panel:#1e2126; --ink:#e8e8e6; --muted:#9aa0aa; --line:#30343b; --code:#23262c; } }
+body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.5 -apple-system, system-ui, sans-serif; }
+main { max-width:1200px; margin:auto; padding:16px; }
+section { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:16px; margin:16px 0; }
+small { color:var(--muted); font-weight:400; }
+.preview { max-width:100%; width:420px; border-radius:6px; image-rendering:pixelated; }
+.frames { display:flex; flex-wrap:wrap; gap:8px; }
+.frame { height:140px; background:#888; border-radius:4px; image-rendering:pixelated; }
+pre { background:var(--code); padding:10px; border-radius:6px; white-space:pre-wrap; font-size:12.5px; }
+</style></head><body><main><h1>magician sprite animations</h1>
+<p>Each animation starts and lands in the rig's rest pose (base image); frames are aligned to it.</p>
+<section><h2>CHARGE <small>chatgpt</small></h2><img class="preview" src="charge/preview.gif"><p>6 frames · 1010 ms · timings [150, 150, 150, 150, 150, 260]</p><div class="frames"><img class="frame" src="charge/frame_00.png"><img class="frame" src="charge/frame_01.png"><img class="frame" src="charge/frame_02.png"><img class="frame" src="charge/frame_03.png"><img class="frame" src="charge/frame_04.png"><img class="frame" src="charge/frame_05.png"></div></section><section><h2>HIT STUN <small>chatgpt</small></h2><img class="preview" src="hit-stun/preview.gif"><p>8 frames · 1220 ms · timings [140, 140, 140, 140, 140, 140, 140, 240]</p><div class="frames"><img class="frame" src="hit-stun/frame_00.png"><img class="frame" src="hit-stun/frame_01.png"><img class="frame" src="hit-stun/frame_02.png"><img class="frame" src="hit-stun/frame_03.png"><img class="frame" src="hit-stun/frame_04.png"><img class="frame" src="hit-stun/frame_05.png"><img class="frame" src="hit-stun/frame_06.png"><img class="frame" src="hit-stun/frame_07.png"></div></section><section><h2>JUMP <small>gemini-3-pro-image</small></h2><img class="preview" src="jump/preview.gif"><p>5 frames · 840 ms · timings [140, 140, 140, 140, 280]</p><div class="frames"><img class="frame" src="jump/frame_00.png"><img class="frame" src="jump/frame_01.png"><img class="frame" src="jump/frame_02.png"><img class="frame" src="jump/frame_03.png"><img class="frame" src="jump/frame_04.png"></div></section></main></body></html>

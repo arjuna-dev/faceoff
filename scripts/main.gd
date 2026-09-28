@@ -13,6 +13,9 @@ const FighterRosterType = preload("res://scripts/characters/fighter_roster.gd")
 const NetworkProtocolType = preload("res://scripts/systems/network_protocol.gd")
 const ContactsImporterType = preload("res://scripts/systems/android_contacts.gd")
 const MockMediaRoomType = preload("res://scripts/systems/mock_media_room.gd")
+const SpriteAnimationPlayerType = preload("res://scripts/characters/sprite_animation_player.gd")
+## Stand-in sprite set for fighters without their own, until the magician is playable.
+const DEMO_SPRITE_SET := "magician"
 var player: RagdollCharacter
 var opponent: RagdollCharacter
 var arena_backdrop: Node2D
@@ -52,6 +55,12 @@ var media_room: MediaRoom
 var navigation_portrait := false
 var voice: FighterVoice
 var mic_button: Button
+var action_button: Button
+var action_row: Control
+var action_buttons: Array[Button] = []
+var action_hint_labels: Array[Label] = []
+var sprite_player: SpriteAnimationPlayer
+var action_fighter: RagdollCharacter
 var social: FaceoffSocialController
 var accepted_match := ""
 var arena_peer_count := 0
@@ -190,8 +199,22 @@ func _build_hud() -> void:
 	bottom.color = Color("111727")
 	bottom.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	layer.add_child(bottom)
-	_label(layer, "DRAG TO STRIKE / FOREARMS + SHINS BLOCK / FASTER = STRONGER", Vector2(22, 487), 13, Color("ffcb77"))
-	_label(layer, "TORSO up slowly: extend / swipe up: jump / sideways: walk    HIGH FOOT + WALK: hop", Vector2(22, 510), 11, Color("9cb5c6"))
+	action_hint_labels = [
+		_label(layer, "DRAG TO STRIKE / FOREARMS + SHINS BLOCK / FASTER = STRONGER", Vector2(22, 487), 13, Color("ffcb77")),
+		_label(layer, "TORSO up slowly: extend / swipe up: jump / sideways: walk    HIGH FOOT + WALK: hop", Vector2(22, 510), 11, Color("9cb5c6")),
+	]
+	action_button = Button.new()
+	action_button.text = "ACTION!"
+	action_button.position = Vector2(566, 489)
+	action_button.size = Vector2(104, 38)
+	action_button.pressed.connect(_toggle_action_row)
+	layer.add_child(action_button)
+	action_row = Control.new()
+	action_row.position = Vector2.ZERO
+	action_row.size = Vector2(960, 540)
+	action_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	action_row.visible = false
+	layer.add_child(action_row)
 	var reset := Button.new()
 	reset.text = "REMATCH [R]"
 	reset.position = Vector2(787, 489)
@@ -730,6 +753,93 @@ func _set_navigation_mode(portrait: bool) -> void:
 	DisplayServer.screen_set_orientation(orientation)
 	get_tree().root.content_scale_size = Vector2i(540, 960) if portrait else Vector2i(960, 540)
 
+func _sprite_set_for(fighter: RagdollCharacter) -> String:
+	var own := String(fighter.profile.sprite_set) if fighter and fighter.profile else ""
+	return own if not own.is_empty() else DEMO_SPRITE_SET
+
+func _toggle_action_row() -> void:
+	if action_row.visible:
+		_close_action_row()
+		return
+	for button in action_buttons:
+		button.queue_free()
+	action_buttons.clear()
+	var manifest := SpriteAnimationPlayerType.load_manifest(_sprite_set_for(local_fighter))
+	var animations: Array = manifest.get("animations", [])
+	if animations.is_empty():
+		status.text = "NO ACTIONS FOR THIS FIGHTER YET"
+		return
+	for label in action_hint_labels:
+		label.visible = false
+	action_row.visible = true
+	# Buttons fan out from ACTION! along the bottom bar, one per animation.
+	var width := 104.0
+	var gap := 10.0
+	for index in animations.size():
+		var entry: Dictionary = animations[index]
+		var button := Button.new()
+		button.text = String(entry.get("label", entry["state"]))
+		button.size = Vector2(width, 38)
+		button.position = action_button.position
+		button.pressed.connect(_play_action.bind(String(entry["state"])))
+		action_row.add_child(button)
+		action_buttons.append(button)
+		var target := Vector2(action_button.position.x - (index + 1) * (width + gap), action_button.position.y)
+		var tween := create_tween()
+		tween.tween_property(button, "position", target, 0.16 + index * 0.04).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+
+func _close_action_row() -> void:
+	action_row.visible = false
+	for label in action_hint_labels:
+		label.visible = true
+
+## Rest pose, then the sprite animation in place of the rig, then back to the
+## rest pose so the player can take over again.
+func _play_action(state: String) -> void:
+	_close_action_row()
+	var fighter := local_fighter
+	if fighter == null or fighter.is_ko or fighter.is_fallen or (sprite_player and sprite_player.playing):
+		return
+	var manifest := SpriteAnimationPlayerType.load_manifest(_sprite_set_for(fighter))
+	fighter.return_to_guard()
+	if sprite_player == null:
+		sprite_player = SpriteAnimationPlayerType.new()
+		sprite_player.z_index = 5
+		add_child(sprite_player)
+		sprite_player.finished.connect(_on_action_finished)
+	var height := _rest_height(fighter)
+	if not sprite_player.play(manifest, state, fighter.global_position, height, fighter.facing_direction):
+		status.text = "COULD NOT PLAY %s" % state.to_upper()
+		return
+	action_fighter = fighter
+	fighter.input_enabled = false
+	fighter.combat_enabled = false
+	fighter.visible = false
+	action_button.disabled = true
+
+func _rest_height(fighter: RagdollCharacter) -> float:
+	# Feet are the node origin; the head joint plus its radius is the top.
+	var head: Vector2 = fighter.joints.get("head", Vector2(0, -260))
+	return maxf(120.0, -head.y + 30.0)
+
+func _cancel_action() -> void:
+	if sprite_player and sprite_player.playing:
+		sprite_player.stop()
+		_on_action_finished("")
+	if action_row and action_row.visible:
+		_close_action_row()
+
+func _on_action_finished(_state: String) -> void:
+	action_button.disabled = false
+	var fighter := action_fighter
+	action_fighter = null
+	if fighter == null:
+		return
+	fighter.visible = true
+	fighter.input_enabled = true
+	fighter.combat_enabled = true
+	fighter.return_to_guard()
+
 func _set_arena_visible(value: bool) -> void:
 	if solo_home_layer:
 		solo_home_layer.hide()
@@ -743,6 +853,8 @@ func _set_arena_visible(value: bool) -> void:
 		opponent.process_mode = Node.PROCESS_MODE_INHERIT if value else Node.PROCESS_MODE_DISABLED
 	if arena_hud_layer:
 		arena_hud_layer.visible = value
+	if not value:
+		_cancel_action()
 
 func _on_contact_message_requested(contact: Dictionary) -> void:
 	status.text = "CHAT WITH %s - CALL WHEN READY" % String(contact.get("name", "CONTACT")).to_upper()
@@ -876,7 +988,7 @@ func _physics_process(delta: float) -> void:
 		round_seconds = maxf(0.0, round_seconds - delta)
 		timer.text = "%02d" % ceili(round_seconds)
 		if round_seconds == 0:
-			_end_round("DRAW" if player.health == opponent.health else ("BATYR WINS" if player.health > opponent.health else "KIRO WINS"))
+			_end_round("DRAW" if player.health == opponent.health else (player.profile.display_name.to_upper() + " WINS" if player.health > opponent.health else opponent.profile.display_name.to_upper() + " WINS"))
 
 func _unhandled_key_input(event: InputEvent) -> void:
 	if not event.is_pressed() or event.is_echo():
@@ -1023,6 +1135,7 @@ func _reset() -> void:
 		return
 	round_seconds = 90
 	round_over = false
+	_cancel_action()
 	player.reset_character()
 	opponent.reset_character()
 	player.combat_enabled = true

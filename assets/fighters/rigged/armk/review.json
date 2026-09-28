@@ -1,0 +1,13 @@
+{
+  "decision": "accepted",
+  "reviewer": "codex",
+  "notes": "Inspected all 13 production poses and both facings across five body selections. Source artwork proportions preserved with a shared uniform scale and native marker-derived lengths. Scale checks passed. Remaining deeply bent stance and knee overlap are recorded for pose refinement.",
+  "rig_sha256": "86aa996d5552eac20041358bbd9583025b92739dd322b6b98eb355cc6e183c6f",
+  "runtime_sha256": "b68f7969d6fd53f13f3a5f0f6c6729247b9e0f304d4feebca1632b3ff1590a22",
+  "captures": {
+    "builds/fighters/armk_preserved/review_production/poses.png": "18d96b3e983afbb8954b9b5aac732892b7da78553ff8022b676b7bcd964cafe0",
+    "builds/fighters/armk_preserved/review_production/body-types.png": "41abbe8b6949f3b6083643ed3611edd24bbc29bab21e46dff025fe83278346e6",
+    "builds/fighters/armk_preserved/review_production/capture.json": "da0abe78d001546149b5d178ea8bccc1a918b5b4403b2a35db3638b41f9f3f56",
+    "builds/fighters/armk_preserved/review_production/mechanics.json": "fc7c984669d2893be152a87608c9f14074a466798387cb62fcfc85d87ed7612c"
+  }
+}

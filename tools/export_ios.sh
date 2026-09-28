@@ -46,6 +46,8 @@ while [[ $# -gt 0 ]]; do
 	esac
 done
 
+"${RIG_PYTHON:-python3}" "$project_root/tools/verify_rigged_assets.py" --hash-only --require-review
+
 if [[ "$output_dir" != /* ]]; then
 	output_dir="${project_root}/${output_dir}"
 fi

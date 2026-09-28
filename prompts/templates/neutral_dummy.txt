@@ -1,0 +1,20 @@
+Create a structural diagram, not a mannequin and not a character. Use only flat
+basic 2D geometric shapes with solid neutral colors and simple outlines. Do not
+draw a face, skin, muscles, breasts, genitals, hands with fingers, clothing folds,
+hair, identity, sex, gender, expression, pose personality, shading or anatomy
+details. The diagram must not resemble a finished person.
+
+The shapes are placeholders whose only purpose is to show the twelve cells,
+joint centers, segment lengths, ownership and relative scale. Future generation
+models must replace every shape with a requested character and must never treat
+the placeholder color or silhouette as skin, clothing or identity.
+
+Use one flat light gray for head, torso and arm placeholders. Use a second flat
+gray for the lower-torso garment-ownership block, thighs and shins. This block
+establishes the mandatory lower-body garment: its waistband and upper section
+belong to the torso/pelvis cell, then the same garment continues through the thigh
+and shin cells. Use a third flat gray for below-ankle footwear shapes.
+
+Keep the exact canvas, magenta cell backgrounds, white frame and gutters, twelve
+detached pieces and all 22 cyan markers. No gradients, texture, lighting, labels,
+logos or character-specific details.

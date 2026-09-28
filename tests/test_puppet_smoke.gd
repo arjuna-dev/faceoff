@@ -74,8 +74,8 @@ func _run() -> void:
 	for node in p.get_children():
 		check(not node is PhysicsBody2D, "fighter has no physics bodies")
 	check(o.health == 100, "idle cannot attack")
-	# Both shoulders share the same forward origin. A rear hand must not lose
-	# usable reach merely because it is drawn behind the torso.
+	# Both arms share a torso-centered forward limit. Source-marker rigs may
+	# have distinct anatomical shoulders, but depth ordering cannot change reach.
 	for fighter_id in FighterRosterType.IDS:
 		p.set_profile(FighterRosterType.profile(fighter_id))
 		for side in ["left", "right"]:
@@ -84,7 +84,8 @@ func _run() -> void:
 		var left_forward_reach: float = p.joints.left_hand.x - p.joints.shoulder.x
 		var right_forward_reach: float = p.joints.right_hand.x - p.joints.shoulder.x
 		check(is_equal_approx(left_forward_reach, right_forward_reach), "%s rear and front arms have equal forward reach" % p.profile.display_name)
-		check(left_forward_reach >= p.ARM_REACH, "%s rear arm reaches its full combat radius" % p.profile.display_name)
+		var expected_reach: float = p.skeleton_skin.arm_control_reach(p.ARM_REACH) if p.skeleton_skin and p.skeleton_skin.uses_authored_shoulders() else p.ARM_REACH
+		check(left_forward_reach >= expected_reach-0.01, "%s rear arm reaches its full combat radius" % p.profile.display_name)
 		p.held_targets.clear()
 	p.set_profile(FighterRosterType.profile("batyr"))
 	p._solve_pose()

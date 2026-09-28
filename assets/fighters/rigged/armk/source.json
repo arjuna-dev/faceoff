@@ -1,0 +1,719 @@
+{
+  "schema_version": 3,
+  "fighter_id": "armk",
+  "body_type": "standard",
+  "source": "assets/fighters/rigged/armk/imported_source.png",
+  "render_mode": "preserve_proportions",
+  "pixel_scale": 0.27998247457371,
+  "parts": {
+    "torso": {
+      "rect": [
+        455,
+        0,
+        981,
+        382
+      ],
+      "pivot": [
+        723.25,
+        56.75
+      ],
+      "tip": [
+        725.25,
+        297.0
+      ],
+      "neck": [
+        725.0,
+        26.5
+      ],
+      "shoulders": [
+        [
+          626.5,
+          56.5
+        ],
+        [
+          820.0,
+          57.0
+        ]
+      ],
+      "hips": [
+        [
+          640.5,
+          297.0
+        ],
+        [
+          810.0,
+          297.0
+        ]
+      ]
+    },
+    "head": {
+      "rect": [
+        23,
+        0,
+        455,
+        382
+      ],
+      "pivot": [
+        223.0,
+        315.0
+      ],
+      "tip": [
+        230,
+        60
+      ]
+    },
+    "left_upper_arm": {
+      "rect": [
+        4,
+        382,
+        257,
+        752
+      ],
+      "pivot": [
+        176.5,
+        441.5
+      ],
+      "tip": [
+        100.5,
+        626.5
+      ]
+    },
+    "left_forearm": {
+      "rect": [
+        257,
+        382,
+        511,
+        752
+      ],
+      "pivot": [
+        364.5,
+        454.0
+      ],
+      "tip": [
+        393,
+        717
+      ]
+    },
+    "right_upper_arm": {
+      "rect": [
+        766,
+        382,
+        1002,
+        752
+      ],
+      "pivot": [
+        846.5,
+        442.5
+      ],
+      "tip": [
+        921.5,
+        626.5
+      ]
+    },
+    "right_forearm": {
+      "rect": [
+        511,
+        382,
+        766,
+        752
+      ],
+      "pivot": [
+        658.5,
+        456.0
+      ],
+      "tip": [
+        630,
+        717
+      ]
+    },
+    "left_thigh": {
+      "rect": [
+        136,
+        752,
+        508,
+        1143
+      ],
+      "pivot": [
+        325.5,
+        776.5
+      ],
+      "tip": [
+        231.5,
+        1069.5
+      ]
+    },
+    "right_thigh": {
+      "rect": [
+        508,
+        752,
+        887,
+        1143
+      ],
+      "pivot": [
+        697.5,
+        776.5
+      ],
+      "tip": [
+        786.5,
+        1073.0
+      ]
+    },
+    "left_shin": {
+      "rect": [
+        53,
+        1143,
+        252,
+        1505
+      ],
+      "pivot": [
+        128.5,
+        1187.5
+      ],
+      "tip": [
+        123.5,
+        1425.5
+      ]
+    },
+    "right_shin": {
+      "rect": [
+        508,
+        1143,
+        759,
+        1505
+      ],
+      "pivot": [
+        650.5,
+        1187.0
+      ],
+      "tip": [
+        640.5,
+        1425.5
+      ]
+    },
+    "left_boot": {
+      "rect": [
+        252,
+        1143,
+        508,
+        1505
+      ],
+      "pivot": [
+        351.5,
+        1394.5
+      ],
+      "tip": [
+        351.5,
+        1479
+      ]
+    },
+    "right_boot": {
+      "rect": [
+        759,
+        1143,
+        1005,
+        1505
+      ],
+      "pivot": [
+        860.5,
+        1394.5
+      ],
+      "tip": [
+        860.5,
+        1481
+      ]
+    }
+  },
+  "coordinate_contract": {
+    "schema_version": 1,
+    "canvas": [
+      1024,
+      1536
+    ],
+    "mapping": "identity_page_coordinates; crop_local = page - crop_origin",
+    "marker_json": "extracted_pivots.json",
+    "marker_json_sha256": "3ae8bd6101068e1f88f2913a1a7d42069fd402d2cb06d74f91f4bf11c9cf90fd",
+    "marker_count": 22,
+    "calculated_count": 7,
+    "points": [
+      {
+        "key": "head.pivot",
+        "part": "head",
+        "field": "pivot",
+        "index": null,
+        "kind": "extracted",
+        "page": [
+          223.0,
+          315.0
+        ],
+        "crop_local": [
+          200.0,
+          315.0
+        ],
+        "extraction_cell": "head_and_neck",
+        "original_index": 0
+      },
+      {
+        "key": "torso.neck",
+        "part": "torso",
+        "field": "neck",
+        "index": null,
+        "kind": "extracted",
+        "page": [
+          725.0,
+          26.5
+        ],
+        "crop_local": [
+          270.0,
+          26.5
+        ],
+        "extraction_cell": "torso_and_pelvis",
+        "original_index": 0
+      },
+      {
+        "key": "torso.shoulders.0",
+        "part": "torso",
+        "field": "shoulders",
+        "index": 0,
+        "kind": "extracted",
+        "page": [
+          626.5,
+          56.5
+        ],
+        "crop_local": [
+          171.5,
+          56.5
+        ],
+        "extraction_cell": "torso_and_pelvis",
+        "original_index": 1
+      },
+      {
+        "key": "torso.shoulders.1",
+        "part": "torso",
+        "field": "shoulders",
+        "index": 1,
+        "kind": "extracted",
+        "page": [
+          820.0,
+          57.0
+        ],
+        "crop_local": [
+          365.0,
+          57.0
+        ],
+        "extraction_cell": "torso_and_pelvis",
+        "original_index": 2
+      },
+      {
+        "key": "torso.hips.0",
+        "part": "torso",
+        "field": "hips",
+        "index": 0,
+        "kind": "extracted",
+        "page": [
+          640.5,
+          297.0
+        ],
+        "crop_local": [
+          185.5,
+          297.0
+        ],
+        "extraction_cell": "torso_and_pelvis",
+        "original_index": 3
+      },
+      {
+        "key": "torso.hips.1",
+        "part": "torso",
+        "field": "hips",
+        "index": 1,
+        "kind": "extracted",
+        "page": [
+          810.0,
+          297.0
+        ],
+        "crop_local": [
+          355.0,
+          297.0
+        ],
+        "extraction_cell": "torso_and_pelvis",
+        "original_index": 4
+      },
+      {
+        "key": "left_upper_arm.pivot",
+        "part": "left_upper_arm",
+        "field": "pivot",
+        "index": null,
+        "kind": "extracted",
+        "page": [
+          176.5,
+          441.5
+        ],
+        "crop_local": [
+          172.5,
+          59.5
+        ],
+        "extraction_cell": "viewer_left_upper_arm",
+        "original_index": 0
+      },
+      {
+        "key": "left_upper_arm.tip",
+        "part": "left_upper_arm",
+        "field": "tip",
+        "index": null,
+        "kind": "extracted",
+        "page": [
+          100.5,
+          626.5
+        ],
+        "crop_local": [
+          96.5,
+          244.5
+        ],
+        "extraction_cell": "viewer_left_upper_arm",
+        "original_index": 1
+      },
+      {
+        "key": "left_forearm.pivot",
+        "part": "left_forearm",
+        "field": "pivot",
+        "index": null,
+        "kind": "extracted",
+        "page": [
+          364.5,
+          454.0
+        ],
+        "crop_local": [
+          107.5,
+          72.0
+        ],
+        "extraction_cell": "viewer_left_forearm_and_hand",
+        "original_index": 0
+      },
+      {
+        "key": "right_forearm.pivot",
+        "part": "right_forearm",
+        "field": "pivot",
+        "index": null,
+        "kind": "extracted",
+        "page": [
+          658.5,
+          456.0
+        ],
+        "crop_local": [
+          147.5,
+          74.0
+        ],
+        "extraction_cell": "viewer_right_forearm_and_hand",
+        "original_index": 0
+      },
+      {
+        "key": "right_upper_arm.pivot",
+        "part": "right_upper_arm",
+        "field": "pivot",
+        "index": null,
+        "kind": "extracted",
+        "page": [
+          846.5,
+          442.5
+        ],
+        "crop_local": [
+          80.5,
+          60.5
+        ],
+        "extraction_cell": "viewer_right_upper_arm",
+        "original_index": 0
+      },
+      {
+        "key": "right_upper_arm.tip",
+        "part": "right_upper_arm",
+        "field": "tip",
+        "index": null,
+        "kind": "extracted",
+        "page": [
+          921.5,
+          626.5
+        ],
+        "crop_local": [
+          155.5,
+          244.5
+        ],
+        "extraction_cell": "viewer_right_upper_arm",
+        "original_index": 1
+      },
+      {
+        "key": "left_thigh.pivot",
+        "part": "left_thigh",
+        "field": "pivot",
+        "index": null,
+        "kind": "extracted",
+        "page": [
+          325.5,
+          776.5
+        ],
+        "crop_local": [
+          189.5,
+          24.5
+        ],
+        "extraction_cell": "viewer_left_thigh",
+        "original_index": 0
+      },
+      {
+        "key": "left_thigh.tip",
+        "part": "left_thigh",
+        "field": "tip",
+        "index": null,
+        "kind": "extracted",
+        "page": [
+          231.5,
+          1069.5
+        ],
+        "crop_local": [
+          95.5,
+          317.5
+        ],
+        "extraction_cell": "viewer_left_thigh",
+        "original_index": 1
+      },
+      {
+        "key": "right_thigh.pivot",
+        "part": "right_thigh",
+        "field": "pivot",
+        "index": null,
+        "kind": "extracted",
+        "page": [
+          697.5,
+          776.5
+        ],
+        "crop_local": [
+          189.5,
+          24.5
+        ],
+        "extraction_cell": "viewer_right_thigh",
+        "original_index": 0
+      },
+      {
+        "key": "right_thigh.tip",
+        "part": "right_thigh",
+        "field": "tip",
+        "index": null,
+        "kind": "extracted",
+        "page": [
+          786.5,
+          1073.0
+        ],
+        "crop_local": [
+          278.5,
+          321.0
+        ],
+        "extraction_cell": "viewer_right_thigh",
+        "original_index": 1
+      },
+      {
+        "key": "left_shin.pivot",
+        "part": "left_shin",
+        "field": "pivot",
+        "index": null,
+        "kind": "extracted",
+        "page": [
+          128.5,
+          1187.5
+        ],
+        "crop_local": [
+          75.5,
+          44.5
+        ],
+        "extraction_cell": "viewer_left_shin",
+        "original_index": 0
+      },
+      {
+        "key": "left_shin.tip",
+        "part": "left_shin",
+        "field": "tip",
+        "index": null,
+        "kind": "extracted",
+        "page": [
+          123.5,
+          1425.5
+        ],
+        "crop_local": [
+          70.5,
+          282.5
+        ],
+        "extraction_cell": "viewer_left_shin",
+        "original_index": 1
+      },
+      {
+        "key": "left_boot.pivot",
+        "part": "left_boot",
+        "field": "pivot",
+        "index": null,
+        "kind": "extracted",
+        "page": [
+          351.5,
+          1394.5
+        ],
+        "crop_local": [
+          99.5,
+          251.5
+        ],
+        "extraction_cell": "viewer_left_sneaker",
+        "original_index": 0
+      },
+      {
+        "key": "right_shin.pivot",
+        "part": "right_shin",
+        "field": "pivot",
+        "index": null,
+        "kind": "extracted",
+        "page": [
+          650.5,
+          1187.0
+        ],
+        "crop_local": [
+          142.5,
+          44.0
+        ],
+        "extraction_cell": "viewer_right_shin",
+        "original_index": 0
+      },
+      {
+        "key": "right_shin.tip",
+        "part": "right_shin",
+        "field": "tip",
+        "index": null,
+        "kind": "extracted",
+        "page": [
+          640.5,
+          1425.5
+        ],
+        "crop_local": [
+          132.5,
+          282.5
+        ],
+        "extraction_cell": "viewer_right_shin",
+        "original_index": 1
+      },
+      {
+        "key": "right_boot.pivot",
+        "part": "right_boot",
+        "field": "pivot",
+        "index": null,
+        "kind": "extracted",
+        "page": [
+          860.5,
+          1394.5
+        ],
+        "crop_local": [
+          101.5,
+          251.5
+        ],
+        "extraction_cell": "viewer_right_sneaker",
+        "original_index": 0
+      },
+      {
+        "key": "torso.pivot",
+        "part": "torso",
+        "field": "pivot",
+        "index": null,
+        "kind": "calculated",
+        "page": [
+          723.25,
+          56.75
+        ],
+        "crop_local": [
+          268.25,
+          56.75
+        ]
+      },
+      {
+        "key": "torso.tip",
+        "part": "torso",
+        "field": "tip",
+        "index": null,
+        "kind": "calculated",
+        "page": [
+          725.25,
+          297.0
+        ],
+        "crop_local": [
+          270.25,
+          297.0
+        ]
+      },
+      {
+        "key": "head.tip",
+        "part": "head",
+        "field": "tip",
+        "index": null,
+        "kind": "calculated",
+        "page": [
+          230,
+          60
+        ],
+        "crop_local": [
+          207,
+          60
+        ]
+      },
+      {
+        "key": "left_forearm.tip",
+        "part": "left_forearm",
+        "field": "tip",
+        "index": null,
+        "kind": "calculated",
+        "page": [
+          393,
+          717
+        ],
+        "crop_local": [
+          136,
+          335
+        ]
+      },
+      {
+        "key": "right_forearm.tip",
+        "part": "right_forearm",
+        "field": "tip",
+        "index": null,
+        "kind": "calculated",
+        "page": [
+          630,
+          717
+        ],
+        "crop_local": [
+          119,
+          335
+        ]
+      },
+      {
+        "key": "left_boot.tip",
+        "part": "left_boot",
+        "field": "tip",
+        "index": null,
+        "kind": "calculated",
+        "page": [
+          351.5,
+          1479
+        ],
+        "crop_local": [
+          99.5,
+          336
+        ]
+      },
+      {
+        "key": "right_boot.tip",
+        "part": "right_boot",
+        "field": "tip",
+        "index": null,
+        "kind": "calculated",
+        "page": [
+          860.5,
+          1481
+        ],
+        "crop_local": [
+          101.5,
+          338
+        ]
+      }
+    ]
+  }
+}

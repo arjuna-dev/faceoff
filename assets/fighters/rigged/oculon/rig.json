@@ -1,0 +1,179 @@
+{
+  "version": 3,
+  "fighter_id": "oculon",
+  "canvas": [
+    1024,
+    1536
+  ],
+  "source": "/Users/alejandrocamus/Documents/Faceoff/assets/fighters/arcade/Oculon-rig-repaired-raw.png",
+  "source_sha256": "468533d3682e5f9587f456c01c2d475dd7db00ef1b76c08b6f18f9c6bafe31d5",
+  "binding_sha256": "a8bca67b0b4da1078451e3d93d14538e538d806b011da4add5f60d02586a1db8",
+  "contract_sha256": "60fb1ef8ff61456bda7119a4966910d70310b6750c982f300cd638b4ed5d0419",
+  "profile_sha256": "ec785308e85900e381cecbd3f7f50b9cfc0563d3e4490847e4eddfc15bb995cd",
+  "foreground_pixels": 364610,
+  "cropped_foreground_pixels": 0,
+  "resampled": true,
+  "slots": {
+    "torso": {
+      "rect": [
+        400,
+        16,
+        1008,
+        368
+      ],
+      "texture": "torso.png",
+      "margin": 46,
+      "pixels": 34780,
+      "excluded_duplicate_bust_pixels": 0
+    },
+    "head": {
+      "rect": [
+        16,
+        16,
+        384,
+        368
+      ],
+      "texture": "head.png",
+      "margin": 59,
+      "pixels": 22923,
+      "excluded_duplicate_bust_pixels": 0
+    },
+    "left_upper_arm": {
+      "rect": [
+        16,
+        384,
+        256,
+        736
+      ],
+      "texture": "left_upper_arm.png",
+      "margin": 22,
+      "pixels": 31407,
+      "excluded_duplicate_bust_pixels": 0
+    },
+    "left_forearm": {
+      "rect": [
+        272,
+        384,
+        512,
+        736
+      ],
+      "texture": "left_forearm.png",
+      "margin": 27,
+      "pixels": 22413,
+      "excluded_duplicate_bust_pixels": 0
+    },
+    "right_upper_arm": {
+      "rect": [
+        528,
+        384,
+        768,
+        736
+      ],
+      "texture": "right_upper_arm.png",
+      "margin": 25,
+      "pixels": 31395,
+      "excluded_duplicate_bust_pixels": 0
+    },
+    "right_forearm": {
+      "rect": [
+        784,
+        384,
+        1008,
+        736
+      ],
+      "texture": "right_forearm.png",
+      "margin": 29,
+      "pixels": 22080,
+      "excluded_duplicate_bust_pixels": 0
+    },
+    "left_thigh": {
+      "rect": [
+        16,
+        752,
+        496,
+        1136
+      ],
+      "texture": "left_thigh.png",
+      "margin": 22,
+      "pixels": 38180,
+      "excluded_duplicate_bust_pixels": 0
+    },
+    "right_thigh": {
+      "rect": [
+        512,
+        752,
+        1008,
+        1136
+      ],
+      "texture": "right_thigh.png",
+      "margin": 22,
+      "pixels": 38242,
+      "excluded_duplicate_bust_pixels": 0
+    },
+    "left_shin": {
+      "rect": [
+        16,
+        1152,
+        240,
+        1520
+      ],
+      "texture": "left_shin.png",
+      "margin": 24,
+      "pixels": 36164,
+      "excluded_duplicate_bust_pixels": 0
+    },
+    "right_shin": {
+      "rect": [
+        512,
+        1152,
+        752,
+        1520
+      ],
+      "texture": "right_shin.png",
+      "margin": 29,
+      "pixels": 36569,
+      "excluded_duplicate_bust_pixels": 0
+    },
+    "left_boot": {
+      "rect": [
+        256,
+        1152,
+        496,
+        1520
+      ],
+      "texture": "left_boot.png",
+      "margin": 14,
+      "pixels": 25248,
+      "excluded_duplicate_bust_pixels": 0
+    },
+    "right_boot": {
+      "rect": [
+        768,
+        1152,
+        1008,
+        1520
+      ],
+      "texture": "right_boot.png",
+      "margin": 14,
+      "pixels": 25209,
+      "excluded_duplicate_bust_pixels": 0
+    }
+  },
+  "textures_sha256": {
+    "torso": "1233c8489d4ee5f4a638b604fd1d44c166edfcf23cda3c85581d15bc5b599a32",
+    "head": "f119acbe6d1a5de117b2c1f44d6ed0433f41169d33fdd792c1e50e0cc733489b",
+    "left_upper_arm": "de182eb70064db3b6e977b1cf1e047bbaa43fcf40d87e6553c7c71dc0b4978a6",
+    "left_forearm": "82148c28ef42817109e713de6591bb8cd2a35ddbfc7e0f9b5b0fd1a62e66e157",
+    "right_upper_arm": "79dae974345e704d40920ca698a993551b37340c6c0a4d1a0007d88a11c8a424",
+    "right_forearm": "57ec521851e38cea96261a8dded5efe8d9f8b9e16bbd6eb4c6142508b15ddcfe",
+    "left_thigh": "0b13e586483d4ea254cd8a09cac8c4d188699be6b48e0a5b79e255110144a4ca",
+    "right_thigh": "85682e72b1a104e830a3d85bc272a115e351c93593927f9c0b87208998435b7e",
+    "left_shin": "6ed37b2980874fc4318920c4064c11b02bfff6a06392c61e9069f32fa4a1e031",
+    "right_shin": "402d75d7d91785c58eccc4370b969b87444af9dda2cdce4a0e79d7a48f754308",
+    "left_boot": "60567ceaca4b3fdf11938c0f09ed35f80c807bf269a677d7cb8fa3c416bab44e",
+    "right_boot": "f03147e5ac4eb7ec0dc7badf0af6ce5773fb5bcc5b96701383445c4b742a08f9"
+  },
+  "excluded_duplicate_bust_pixels": 12374,
+  "sheet": "assets/fighters/arcade/Oculon.png",
+  "sheet_sha256": "64ccff18e9abca0e50ffc2f6fd816db7f99282b1602a21426fcabfe5e47c299f"
+}

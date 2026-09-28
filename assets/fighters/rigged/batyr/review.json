@@ -1,0 +1,13 @@
+{
+  "decision": "accepted",
+  "reviewer": "codex",
+  "notes": "Inspected production pose and body-type matrices after shared runtime changes. Legacy rendering and equal forward arm reach retained.",
+  "rig_sha256": "d527bb647975d82468db0ee17f3188367917359732a666c10f4c96954b5fcd59",
+  "runtime_sha256": "b68f7969d6fd53f13f3a5f0f6c6729247b9e0f304d4feebca1632b3ff1590a22",
+  "captures": {
+    "builds/fighters/batyr/review_preserved_runtime/poses.png": "55975ab7ba8acec44d736199e8df7707b600c2e9762bde6c35287391f1350dc5",
+    "builds/fighters/batyr/review_preserved_runtime/body-types.png": "d84aea648633c71d60b19b2754ff71aeec16942878769880f434e95de61d39d2",
+    "builds/fighters/batyr/review_preserved_runtime/capture.json": "f14d0cd97125b0d707a445fed260cd566f414899f51d57674e1257afd28f172e",
+    "builds/fighters/batyr/review_preserved_runtime/mechanics.json": "9d56329dccddb2888bad7801ad5a97caeed8687e48e4bd44ace56759fb7bc395"
+  }
+}

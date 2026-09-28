@@ -1,0 +1,223 @@
+{
+  "schema_version": 3,
+  "fighter_id": "batyr",
+  "body_type": "standard",
+  "parts": {
+    "torso": {
+      "rect": [
+        400,
+        16,
+        1008,
+        368
+      ],
+      "pivot": [
+        704,
+        140
+      ],
+      "tip": [
+        704,
+        290
+      ],
+      "source_slot": "torso",
+      "source_width": 174.62686567164178
+    },
+    "head": {
+      "rect": [
+        16,
+        16,
+        384,
+        368
+      ],
+      "pivot": [
+        200,
+        280
+      ],
+      "tip": [
+        200,
+        140
+      ],
+      "source_slot": "head",
+      "source_width": 156.15384615384616
+    },
+    "left_upper_arm": {
+      "rect": [
+        16,
+        384,
+        256,
+        736
+      ],
+      "pivot": [
+        136,
+        462
+      ],
+      "tip": [
+        136,
+        658
+      ],
+      "source_slot": "left_upper_arm",
+      "source_width": 114.33333333333333
+    },
+    "left_forearm": {
+      "rect": [
+        272,
+        384,
+        512,
+        736
+      ],
+      "pivot": [
+        392,
+        452
+      ],
+      "tip": [
+        392,
+        648
+      ],
+      "source_slot": "left_forearm",
+      "source_width": 98.0
+    },
+    "right_upper_arm": {
+      "rect": [
+        528,
+        384,
+        768,
+        736
+      ],
+      "pivot": [
+        648,
+        462
+      ],
+      "tip": [
+        648,
+        658
+      ],
+      "source_slot": "right_upper_arm",
+      "source_width": 114.33333333333333
+    },
+    "right_forearm": {
+      "rect": [
+        784,
+        384,
+        1008,
+        736
+      ],
+      "pivot": [
+        896,
+        452
+      ],
+      "tip": [
+        896,
+        648
+      ],
+      "source_slot": "right_forearm",
+      "source_width": 98.0
+    },
+    "left_thigh": {
+      "rect": [
+        16,
+        752,
+        496,
+        1136
+      ],
+      "pivot": [
+        256,
+        820
+      ],
+      "tip": [
+        256,
+        1032
+      ],
+      "source_slot": "left_thigh",
+      "source_width": 159.0
+    },
+    "right_thigh": {
+      "rect": [
+        512,
+        752,
+        1008,
+        1136
+      ],
+      "pivot": [
+        760,
+        820
+      ],
+      "tip": [
+        760,
+        1032
+      ],
+      "source_slot": "right_thigh",
+      "source_width": 159.0
+    },
+    "left_shin": {
+      "rect": [
+        16,
+        1152,
+        240,
+        1520
+      ],
+      "pivot": [
+        128,
+        1228
+      ],
+      "tip": [
+        128,
+        1388
+      ],
+      "source_slot": "left_shin",
+      "source_width": 160.0
+    },
+    "right_shin": {
+      "rect": [
+        512,
+        1152,
+        752,
+        1520
+      ],
+      "pivot": [
+        632,
+        1228
+      ],
+      "tip": [
+        632,
+        1388
+      ],
+      "source_slot": "right_shin",
+      "source_width": 160.0
+    },
+    "left_boot": {
+      "rect": [
+        256,
+        1152,
+        496,
+        1520
+      ],
+      "pivot": [
+        330,
+        1240
+      ],
+      "tip": [
+        330,
+        1400
+      ],
+      "source_slot": "left_boot",
+      "source_width": 195.0
+    },
+    "right_boot": {
+      "rect": [
+        768,
+        1152,
+        1008,
+        1520
+      ],
+      "pivot": [
+        842,
+        1240
+      ],
+      "tip": [
+        842,
+        1400
+      ],
+      "source_slot": "right_boot",
+      "source_width": 195.0
+    }
+  }
+}

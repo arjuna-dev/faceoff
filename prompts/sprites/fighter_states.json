@@ -1,0 +1,7 @@
+[
+  {"state": "charge", "frames": 6, "action": "charge up a power attack: an energy aura builds up tight around the body", "timing": [150, 150, 150, 150, 150, 260]},
+  {"state": "hit-stun", "frames": 8, "action": "get hit hard, stagger back in hit stun and recover", "timing": [140, 140, 140, 140, 140, 140, 140, 240]},
+  {"state": "jump", "frames": 5, "action": "jump: anticipation crouch, launch, apex tuck and landing", "timing": [140, 140, 140, 140, 280]},
+  {"state": "taunt", "frames": 4, "action": "taunt or stance flourish toward the opponent", "timing": [140, 140, 140, 280]},
+  {"state": "special", "frames": 6, "action": "special power finisher move with effects kept tight to the body", "timing": [150, 150, 150, 150, 150, 280]}
+]

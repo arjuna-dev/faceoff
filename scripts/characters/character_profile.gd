@@ -16,6 +16,9 @@ extends Resource
 @export var chest_quirk: String = "HEART"
 @export var quirk_line: String = "winks before falling"
 @export var visual_style: String = "moxie"
+@export_enum("small", "lean", "standard", "broad", "heavy") var body_type: String = "standard"
+## Folder under res://assets/fighters/ holding sprites/index.json; empty means no sprite animations.
+@export var sprite_set: String = ""
 
 func expression_face(expression_id: String) -> String:
 	match expression_id:

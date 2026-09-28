@@ -1,0 +1,30 @@
+{
+  "version": 3,
+  "canvas": [1024, 1536],
+  "minimum_joint_radius": 3,
+  "shoulder_x": 20,
+  "part_order": ["torso", "head", "left_upper_arm", "left_forearm", "right_upper_arm", "right_forearm", "left_thigh", "right_thigh", "left_shin", "right_shin", "left_boot", "right_boot"],
+  "parents": {"head":"torso", "left_upper_arm":"torso", "right_upper_arm":"torso", "left_forearm":"left_upper_arm", "right_forearm":"right_upper_arm", "left_thigh":"torso", "right_thigh":"torso", "left_shin":"left_thigh", "right_shin":"right_thigh", "left_boot":"left_shin", "right_boot":"right_shin"},
+  "rest_joints": {"shoulder":[0,-172], "hip":[-6,-105], "head":[8,-202], "left_shoulder":[20,-176], "right_shoulder":[20,-166], "left_elbow":[26,-129], "right_elbow":[50,-125], "left_hand":[52,-172], "right_hand":[76,-168], "left_hip":[-17,-105], "right_hip":[4,-105], "left_knee":[-38,-57], "right_knee":[42,-57], "left_foot":[-43,-5], "right_foot":[36,-5]},
+  "body_types": {
+    "small": {"head":54, "head_length":49, "torso":66, "upper_arm":22, "forearm":21, "thigh":42, "shin":28, "boot":34, "boot_length":28, "hip_spread":9},
+    "lean": {"head":56, "head_length":52, "torso":68, "upper_arm":23, "forearm":22, "thigh":39, "shin":27, "boot":36, "boot_length":31, "hip_spread":9},
+    "standard": {"head":58, "head_length":52, "torso":78, "upper_arm":28, "forearm":25, "thigh":48, "shin":32, "boot":39, "boot_length":32, "hip_spread":11},
+    "broad": {"head":60, "head_length":52, "torso":88, "upper_arm":33, "forearm":28, "thigh":53, "shin":35, "boot":42, "boot_length":33, "hip_spread":12},
+    "heavy": {"head":62, "head_length":53, "torso":98, "upper_arm":36, "forearm":31, "thigh":60, "shin":39, "boot":45, "boot_length":34, "hip_spread":14}
+  },
+  "slots": {
+    "head":{"rect":[16,16,384,368], "pivot":[200,280], "tip":[200,140]},
+    "torso":{"rect":[400,16,1008,368], "pivot":[704,140], "tip":[704,290]},
+    "left_upper_arm":{"rect":[16,384,256,736], "pivot":[136,462], "tip":[136,658]},
+    "left_forearm":{"rect":[272,384,512,736], "pivot":[392,452], "tip":[392,648]},
+    "right_upper_arm":{"rect":[528,384,768,736], "pivot":[648,462], "tip":[648,658]},
+    "right_forearm":{"rect":[784,384,1008,736], "pivot":[896,452], "tip":[896,648]},
+    "left_thigh":{"rect":[16,752,496,1136], "pivot":[256,820], "tip":[256,1032]},
+    "right_thigh":{"rect":[512,752,1008,1136], "pivot":[760,820], "tip":[760,1032]},
+    "left_shin":{"rect":[16,1152,240,1520], "pivot":[128,1228], "tip":[128,1388]},
+    "left_boot":{"rect":[256,1152,496,1520], "pivot":[330,1240], "tip":[330,1400]},
+    "right_shin":{"rect":[512,1152,752,1520], "pivot":[632,1228], "tip":[632,1388]},
+    "right_boot":{"rect":[768,1152,1008,1520], "pivot":[842,1240], "tip":[842,1400]}
+  }
+}

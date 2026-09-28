@@ -1,5 +1,86 @@
 # Fighter artwork
 
+## Oculon template ankle split and 78% adjustment, 2026-09-17
+
+Template-only revision, not a runtime asset replacement. The built-in image
+generator edited `builds/manual_oculon/oculon_template_chatgpt_ankle_v2.png`
+using the exact saved prompt in
+`builds/manual_oculon/oculon_template_boot_split_prompt.txt`. Both yellow boot
+shafts/cuffs belong to the shin pieces; foot cells contain only the below-ankle
+shoe portions, no calf, cuff or trousers, with flat soles and ankle markers.
+Raw output: `builds/manual_oculon/oculon_template_boot_split_raw.png`.
+
+`tools/resize_marked_oculon_template.py` retains only the generated bottom-row
+cell contents and restores all other source artwork. It then applies an exact
+uniform 0.78 affine scale about each non-torso cell's center with Pillow nearest
+neighbor resampling. Markers scale with their pieces. Magenta cell backgrounds
+are flattened, and light gutter fringes at crop perimeters are removed to avoid
+introducing internal white rectangles. The torso/pelvis remains byte-for-byte
+original, as do the white gutters and twelve cell rectangles.
+
+Final template: `builds/manual_oculon/oculon_template_boot_split_78.png`.
+Measured marker coordinates, transformations and checks:
+`builds/manual_oculon/oculon_template_boot_split_78.json`. All 22 markers remain,
+each within 1.1 pixels of its calculated transformed position; non-torso artwork
+dimensions agree with 78% within two raster pixels. Visually inspected both the
+boot split and final adjusted atlas. No angel regeneration, Godot rig changes,
+production renderer review or export was performed for this template-only task.
+
+## Armk proportion-preserving rig repair, 2026-09-16
+
+No artwork was regenerated. The generic marked-atlas importer now preserves
+source rectangles and marker coordinates. Armk's compiler preserves prepared
+source pixels without resampling, and its Godot rig uses one shared uniform
+pixel scale with source-derived bone lengths. Independent body-type width and
+length fitting is disabled for this format. Existing normalized Batyr and
+Oculon assets retain their legacy rendering.
+
+Reviewed production evidence: `builds/fighters/armk_preserved/review_production/poses.png`
+and `body-types.png` in the same directory. Pixel-equality, uniform scale,
+orthogonality, marker attachment, native segment length, and equal forward
+arm-reach checks pass. Deep knee bending and clothing overlap remain pose
+refinement issues; this review accepts the scaling repair, not a perfect final
+pose design.
+
+## Current workflow: shared character contract, revision 3
+
+See [the complete generation workflow](../../../docs/character-generation.md).
+
+Batyr.png and Oculon.png are now compiled 1024x1536 sheets with identical named
+rectangles and attachment coordinates. Their original repaired raw sources are
+preserved. Source-specific anatomy is recorded in each fighter's source.json;
+the compiler normalizes it into the shared contract. Never edit a compiled
+profile or crop rectangles to conceal an image defect.
+
+The repair moves joints into solid artwork, measures the torso from shoulders
+to hips, preserves head proportions, uses a real assembled Bone2D reference pose,
+and keeps source pixel scaling out of the bones. Neck and hip connections follow
+the chest. Shin and boot share one cuff, and planted shoes have level soles.
+The head combat target follows the visible head.
+
+Both old head images also contained shoulders. Documented source outlines remove
+only this duplicated bust area, with excluded pixels counted in rig.json. Complete
+heads, hands and shoes remain. Normalization resamples artwork deliberately and
+records that fact; normalized pixel counts are not claimed to equal raw counts.
+
+Five generated guide PNGs, matching bindings and prompts are in
+assets/fighters/rigged/templates. Their joint coordinates are identical; head,
+torso and limb proportions differ. The same script creates every guide.
+
+Verification includes pixel ownership and margins, opaque coverage at both ends
+of every attachment, shared ankle connections, visible torso coverage at shoulders,
+neck and hips, both facing directions, five builds, all thirteen acceptance poses,
+and equal arm reach for every active visual style. Gameplay captures and review
+evidence live in tests/rig-validation. Old captures elsewhere in tests are historical
+and must not be used as acceptance evidence for this revision.
+
+The export scripts reject stale sources, compiled images, metadata or visual
+reviews. The end-user AI service is still future work; the callable local workflow
+now supports candidate imports, rejection feedback, real captures and recorded
+human or LLM visual acceptance. Kiro and Jade retain the previous atlas renderer.
+
+## Historical atlas workflow
+
 Generated using ChatGPT image generation in the in-app browser, then edited in place to remove the background. Runtime sources are paired 1536 by 1024 atlases. UV patches in `scripts/characters/arcade_skin.gd` map each source onto the connected gameplay rig.
 
 ## Original prompt

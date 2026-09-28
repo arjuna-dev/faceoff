@@ -11,6 +11,7 @@ signal expression_changed(character: RagdollCharacter, expression_id: String)
 signal pose_changed(character: RagdollCharacter, pose_name: String)
 
 const ArcadeSkinType = preload("res://scripts/characters/arcade_skin.gd")
+const SkeletonRigSkinType = preload("res://scripts/characters/skeleton_rig_skin.gd")
 
 const LIMBS: Array[String] = ["torso", "head", "left_forearm", "right_forearm", "left_thigh", "right_thigh", "left_shin", "right_shin"]
 const ATTACK_LIMBS: Array[String] = ["left_forearm", "right_forearm", "left_thigh", "right_thigh", "left_shin", "right_shin"]
@@ -81,6 +82,7 @@ var body_stroke: Dictionary = {}
 var body_motion_active := false
 var torso_up_travel := 0.0
 var network_remote := false
+var skeleton_skin: Node
 
 
 func return_to_guard() -> void:
@@ -250,12 +252,25 @@ func setup(p_profile: CharacterProfile, index: int, facing: float, _lane: int = 
 		marker.name = limb
 		add_child(marker)
 		bodies[limb] = marker
+	_setup_visual_skin()
 	_solve_pose()
 
 func set_profile(p_profile: CharacterProfile) -> void:
 	profile = p_profile
+	_setup_visual_skin()
 	return_to_guard()
 	queue_redraw()
+
+func _setup_visual_skin() -> void:
+	if skeleton_skin:
+		skeleton_skin.free()
+		skeleton_skin = null
+	if not profile or not SkeletonRigSkinType.has_profile(profile.visual_style):
+		return
+	skeleton_skin = SkeletonRigSkinType.new()
+	skeleton_skin.name = "SkeletonRigSkin"
+	add_child(skeleton_skin)
+	skeleton_skin.configure(profile.visual_style, profile.body_type)
 
 func _update_guard_recovery(delta: float) -> void:
 	for limb in guard_strain.keys():
@@ -324,44 +339,107 @@ func _solve_pose() -> void:
 	var bob := floorf(sin(animation_time * 5.0) * 1.5) * 2.0
 	var hip := Vector2(-6, -105 + crouch * 0.65 + bob - stance_height)
 	var shoulder := Vector2(lean * 0.7, -172 + crouch + bob + absf(lean) * 0.25 - stance_height)
+	if skeleton_skin and skeleton_skin.preserves_proportions():
+		shoulder = hip - (hip - shoulder).normalized() * skeleton_skin.segment_length("torso", 67.0)
 	var head := shoulder + Vector2(8 + lean * 0.3, -30 + head_drop)
 	joints = {"hip": hip, "shoulder": shoulder, "head": head}
+	if skeleton_skin:
+		skeleton_skin.head_tilt = clampf(lean*0.0036, -0.25, 0.25)
+		var head_segment: Array[Vector2] = skeleton_skin._target_segment("head", joints)
+		head = head_segment[0].lerp(head_segment[1], 0.5)
+		joints.head = head
 	for side in ["left", "right"]:
 		var front: bool = side == "right"
 		var step := sin(walk_phase + (0.0 if front else PI)) if was_walking else 0.0
 		var foot := Vector2(((36.0 if front else -43.0) * (1.0 - stance_height / 32.0 * 0.7)) + step * 22.0, -5.0 - maxf(0.0, cos(walk_phase + (0.0 if front else PI))) * 14.0 if was_walking else -5.0)
 		var leg_root := hip + Vector2(10 if front else -11, 0)
+		if skeleton_skin:
+			leg_root = hip + skeleton_skin.hip_offset(side, hip-shoulder)
 		if held_targets.has(side + "_shin"):
 			foot = leg_root + Vector2(held_targets[side + "_shin"])
 		foot = leg_root + (foot - leg_root).limit_length(FOOT_REACH)
 		var knee := _bend(leg_root, foot, LEG_LENGTH, LEG_LENGTH, 1.0)
+		var ankle := foot
+		var boot_direction := Vector2.DOWN
+		var thigh_length := LEG_LENGTH
+		var shin_length := LEG_LENGTH
+		var boot_length := 0.0
+		var preserved: bool = skeleton_skin != null and skeleton_skin.preserves_proportions()
+		if preserved:
+			thigh_length = skeleton_skin.segment_length(side+"_thigh", LEG_LENGTH)
+			shin_length = skeleton_skin.segment_length(side+"_shin", LEG_LENGTH)
+			boot_length = skeleton_skin.segment_length(side+"_boot", 32.0)
+			var lift := clampf((-foot.y - 15.0)/40.0, 0.0, 1.0)
+			for iteration in 4:
+				boot_direction = Vector2.DOWN.rotated(lerp_angle(0.0, Vector2.DOWN.angle_to((foot-knee).normalized()), lift))
+				var offset := (foot - boot_direction * boot_length - leg_root).limit_length(thigh_length+shin_length-0.1)
+				var minimum := absf(thigh_length-shin_length)+0.1
+				if offset.length() < minimum:
+					offset = (offset.normalized() if not offset.is_zero_approx() else Vector2.DOWN)*minimum
+				ankle = leg_root + offset
+				knee = _bend(leg_root, ankle, thigh_length, shin_length, 1.0)
+			foot = ankle + boot_direction * boot_length
 		if held_targets.has(side + "_thigh"):
 			knee = leg_root + Vector2(held_targets[side + "_thigh"]).limit_length(LEG_LENGTH - 1.0)
 			# Keep the lower leg behind the raised knee, never hyperextended.
 			var thigh_direction := (knee - leg_root).normalized()
 			foot = knee + thigh_direction.rotated(0.85) * LEG_LENGTH
+			if preserved:
+				knee = leg_root + thigh_direction * thigh_length
+				ankle = knee + thigh_direction.rotated(0.85) * shin_length
+				foot = ankle + boot_direction * boot_length
 		# Authored landing pose folds the knees up while the back settles on the floor.
 		var landing := 1.0 if is_ko else fall_progress
 		if landing > 0.0:
 			foot = foot.lerp(hip + Vector2(18 if front else 8, 80), landing)
 			knee = knee.lerp(hip + Vector2(44 if front else 26, 43), landing)
+			if preserved:
+				knee = leg_root + (knee-leg_root).normalized()*thigh_length
+				ankle = knee + (foot-boot_direction*boot_length-knee).normalized()*shin_length
+				foot = ankle + boot_direction*boot_length
+		if preserved:
+			joints[side+"_ankle"] = ankle
 		joints[side + "_hip"] = leg_root
 		joints[side + "_knee"] = knee
 		joints[side + "_foot"] = foot
 		var arm_root := shoulder + ArcadeSkinType.arm_root_offset(profile.visual_style, side)
+		if skeleton_skin:
+			arm_root = shoulder + skeleton_skin.arm_root_offset(side, hip - shoulder)
 		var guard_beat := floorf(sin(animation_time * 5.0 + (0.0 if front else 0.8)) * 1.5) * 2.0
 		# Keep both gloves clear of the torso so either touch target stays usable.
 		# Both arms use a real two-segment elbow solve.
 		var guard_offset := ArcadeSkinType.guard_offset(profile.visual_style, front, guard_beat)
+		if skeleton_skin:
+			guard_offset = skeleton_skin.guard_offset(front, guard_beat)
 		var hand := shoulder + guard_offset
+		var authored_shoulders: bool = skeleton_skin != null and skeleton_skin.uses_authored_shoulders()
+		var control_origin := shoulder if authored_shoulders else arm_root
+		var control_reach: float = skeleton_skin.arm_control_reach(ARM_REACH) if authored_shoulders else ARM_REACH
 		if held_targets.has(side + "_forearm"):
-			hand = arm_root + Vector2(held_targets[side + "_forearm"]).limit_length(ARM_REACH)
+			hand = control_origin + Vector2(held_targets[side + "_forearm"]).limit_length(control_reach)
 		hand += Vector2(lean * 0.28, head_drop * 0.22)
+		if authored_shoulders:
+			hand = control_origin + (hand-control_origin).limit_length(control_reach)
+		var upper_length := ARM_UPPER_LENGTH
+		var forearm_length := ARM_FOREARM_LENGTH
+		if skeleton_skin:
+			upper_length = skeleton_skin.segment_length(side+"_upper_arm", ARM_UPPER_LENGTH)
+			forearm_length = skeleton_skin.segment_length(side+"_forearm", ARM_FOREARM_LENGTH)
+			# Keep the solver's target reachable, including dragging onto the
+			# shoulder itself and leaning with a fully extended arm.
+			var maximum := upper_length+forearm_length-0.1 if authored_shoulders else minf(ARM_REACH, upper_length+forearm_length-0.1)
+			var offset := (hand-arm_root).limit_length(maximum)
+			var minimum := absf(forearm_length-upper_length)+0.1
+			if offset.length() < minimum:
+				offset = (offset.normalized() if not offset.is_zero_approx() else Vector2.RIGHT)*minimum
+			hand = arm_root+offset
 		# Rig-first Jade and Oculon sources hang their separated arms downward, so
 		# their elbows fold below the hand line. The original atlas was authored for
 		# the opposite bend and keeps that established deformation direction.
 		var elbow_direction := 1.0 if profile.visual_style in ["jade", "oculon"] else -1.0
-		var elbow := _bend(arm_root, hand, ARM_UPPER_LENGTH, ARM_FOREARM_LENGTH, elbow_direction)
+		if skeleton_skin:
+			elbow_direction = -1.0
+		var elbow := _bend(arm_root, hand, upper_length, forearm_length, elbow_direction)
 		joints[side + "_shoulder"] = arm_root
 		joints[side + "_elbow"] = elbow
 		joints[side + "_hand"] = hand
@@ -373,6 +451,8 @@ func _solve_pose() -> void:
 	var transform_pose := _pose_transform()
 	for marker in bodies.values():
 		marker.position = transform_pose * marker.position
+	if skeleton_skin:
+		skeleton_skin.apply_pose(joints, transform_pose, facing_direction, PIXEL_SIZE)
 
 func _bend(a: Vector2, b: Vector2, l1: float, l2: float, direction: float) -> Vector2:
 	var diff := b - a
@@ -460,6 +540,8 @@ func _update_pointer_drag(id: int, point: Vector2, sample_seconds: float = -1.0)
 		local.x *= facing_direction
 		var side: String = "left" if drag.limb.begins_with("left") else "right"
 		var anchor: Vector2 = joints[side + ("_shoulder" if drag.limb.ends_with("forearm") else "_hip")]
+		if drag.limb.ends_with("forearm") and skeleton_skin and skeleton_skin.uses_authored_shoulders():
+			anchor = joints.shoulder
 		if drag.limb.ends_with("thigh"):
 			held_targets.erase(side + "_shin")
 		elif drag.limb.ends_with("shin"):
@@ -578,6 +660,8 @@ func _displace_guard(limb: String, damage: float, speed: float, direction: Vecto
 		return
 	var side := "left" if limb.begins_with("left") else "right"
 	var anchor: Vector2 = joints[side + ("_shoulder" if limb.ends_with("forearm") else "_hip")]
+	if limb.ends_with("forearm") and skeleton_skin and skeleton_skin.uses_authored_shoulders():
+		anchor = joints.shoulder
 	var endpoint: Vector2 = joints[side + ("_hand" if limb.ends_with("forearm") else "_foot")]
 	var local_direction := direction * Vector2(facing_direction, 1)
 	held_targets[limb] = (endpoint - anchor + local_direction * 35.0 + Vector2(0, 18)).limit_length(ARM_REACH if limb.ends_with("forearm") else FOOT_REACH)
@@ -758,13 +842,15 @@ func _draw() -> void:
 	if joints.is_empty():
 		return
 	var warrior := profile.visual_style in ["batyr", "jade"]
-	var atlas: Texture2D = ArcadeSkinType.atlas_for(profile.visual_style)
 	draw_set_transform(Vector2.ZERO, 0, Vector2.ONE * PIXEL_SIZE)
 	draw_rect(Rect2(-31 if warrior else -26, -1, 62 if warrior else 52, 3), Color(0.04, 0.03, 0.10, 0.45))
 	var posed := _pose_transform()
-	draw_set_transform(posed.origin, posed.get_rotation(), Vector2(PIXEL_SIZE * facing_direction, PIXEL_SIZE))
-	ArcadeSkinType.draw(self, joints, profile.visual_style, atlas)
+	if skeleton_skin == null:
+		var atlas: Texture2D = ArcadeSkinType.atlas_for(profile.visual_style)
+		draw_set_transform(posed.origin, posed.get_rotation(), Vector2(PIXEL_SIZE * facing_direction, PIXEL_SIZE))
+		ArcadeSkinType.draw(self, joints, profile.visual_style, atlas)
 	if video_face_active:
+		draw_set_transform(posed.origin, posed.get_rotation(), Vector2(PIXEL_SIZE * facing_direction, PIXEL_SIZE))
 		ArcadeSkinType.draw_video_face(self, joints, warrior, video_face_texture)
 	if hit_flash > 0.0:
 		draw_set_transform(Vector2.ZERO, 0, Vector2.ONE * PIXEL_SIZE)
