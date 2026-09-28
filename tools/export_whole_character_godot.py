@@ -32,7 +32,9 @@ def export_godot_scene(analysis_path: Path, output_path: Path, project_root: Pat
              if report["parts"].get(name, {}).get("status") == "EXTRACTED"]
     # Same back-to-front order as the pose previews.
     layers = draw_order(report)
-    z_index = {name: index - layers.index("torso_pelvis") for index, name in enumerate(layers)}
+    # Layers start at 0 and stay relative to the rig node, so the back layers
+    # never sink behind whatever the rig is placed on.
+    z_index = {name: index for index, name in enumerate(layers)}
     try:
         output_path.resolve().relative_to(project_root.resolve())
     except ValueError as error:
@@ -90,7 +92,7 @@ def export_godot_scene(analysis_path: Path, output_path: Path, project_root: Pat
         center = [origin[0] + size[0] / 2, origin[1] + size[1] / 2]
         position = [center[0] - anchor[0], center[1] - anchor[1]]
         lines.extend([f'[node name="{name.title().replace("_", "")}Sprite" type="Sprite2D" parent="{path}"]',
-                      'texture_filter = 1', 'z_as_relative = false', f'z_index = {z_index[name]}',
+                      'texture_filter = 1', f'z_index = {z_index[name]}',
                       f'position = {vector(*position)}', f'texture = ExtResource("{index}")', ""])
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text("\n".join(lines), encoding="utf-8")
