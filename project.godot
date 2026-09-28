@@ -36,7 +36,7 @@ window/handheld/orientation=6
 [faceoff]
 
 online_endpoint="nakamas://2-56-96-171.sslip.io"
-online_server_key="5817c4b7ce86507a9cbf2a8488e7aff5d5b0b197fd0fa56d3f7a0104f4e598d4"
+online_server_key=""
 invite_download_url=""
 
 [input]
