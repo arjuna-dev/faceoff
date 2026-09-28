@@ -36,6 +36,8 @@ local VALID_FIGHTERS = {
     kiro = true,
     jade = true,
     oculon = true,
+    armk = true,
+    magician = true,
 }
 
 local function number(value, fallback)

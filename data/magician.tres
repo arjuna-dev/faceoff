@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="CharacterProfile" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/characters/character_profile.gd" id="1_profile"]
+
+[resource]
+script = ExtResource("1_profile")
+display_name = "Magician"
+tagline = "old staff, new tricks"
+primary_color = Color(0.1, 0.52, 0.3, 1)
+secondary_color = Color(0.95, 0.9, 0.78, 1)
+accent_color = Color(0.3, 1, 0.45, 1)
+face_default = "B)"
+face_love = "<3"
+face_shock = "O_O"
+face_laughter = "HA!"
+face_anger = ">:("
+face_confusion = "?"
+face_celebration = "*"
+chest_quirk = "STAFF"
+quirk_line = "blows smoke after a win"
+visual_style = "magician"
+body_type = "standard"
+sprite_set = "magician"

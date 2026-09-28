@@ -1,0 +1,12 @@
+{
+  "version": 3,
+  "fighter_id": "magician",
+  "workflow": "whole_character",
+  "canvas": [
+    1254,
+    1254
+  ],
+  "profile_sha256": "673b6485e5ad490cec1ec973ae371329550141876524ebc8f4e34337bc3522d0",
+  "contract_sha256": "60fb1ef8ff61456bda7119a4966910d70310b6750c982f300cd638b4ed5d0419",
+  "note": "Candidate from tools/whole_character_workflow.py; not part of the v3 atlas review."
+}

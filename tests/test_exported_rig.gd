@@ -8,7 +8,7 @@ func _init() -> void:
 
 func _run() -> void:
 	var failures := 0
-	for style in ["batyr", "oculon", "armk"]:
+	for style in ["batyr", "oculon", "armk", "magician"]:
 		if not RigSkinType.has_profile(style):
 			push_error("Exported rig metadata is missing or invalid: "+style)
 			failures += 1

@@ -1,15 +1,18 @@
 class_name FighterRoster
 extends RefCounted
 
-const IDS: Array[String] = ["batyr", "kiro", "jade", "oculon", "armk"]
+const IDS: Array[String] = ["batyr", "kiro", "jade", "oculon", "armk", "magician"]
 const PROFILES := {
 	"batyr": preload("res://data/batyr.tres"),
 	"kiro": preload("res://data/kiro.tres"),
 	"jade": preload("res://data/jade.tres"),
 	"oculon": preload("res://data/oculon.tres"),
 	"armk": preload("res://data/armk.tres"),
+	"magician": preload("res://data/magician.tres"),
 }
 const ARMK_HEAD = preload("res://assets/fighters/rigged/armk/head.png")
+## Rigged fighters show their rig's head on the select card.
+const RIGGED_HEADS := {"armk": ARMK_HEAD, "magician": preload("res://assets/fighters/rigged/magician/head.png")}
 const ATLAS = preload("res://assets/fighters/arcade/fighters-atlas-v2.png")
 const NEW_ATLAS = preload("res://assets/fighters/arcade/jade-oculon-atlas-v3.png")
 const ATLAS_BY_ID := {
@@ -29,8 +32,8 @@ static func profile(id: String) -> CharacterProfile:
 	return PROFILES.get(id, PROFILES["batyr"]) as CharacterProfile
 
 static func head(id: String) -> Texture2D:
-	if id == "armk":
-		return ARMK_HEAD
+	if RIGGED_HEADS.has(id):
+		return RIGGED_HEADS[id]
 	var atlas_texture := AtlasTexture.new()
 	atlas_texture.atlas = ATLAS_BY_ID.get(id, ATLAS) as Texture2D
 	atlas_texture.region = HEAD_REGIONS.get(id, HEAD_REGIONS["batyr"])

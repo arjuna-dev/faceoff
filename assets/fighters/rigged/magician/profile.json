@@ -1,0 +1,290 @@
+{
+  "schema_version": 3,
+  "fighter_id": "magician",
+  "body_type": "standard",
+  "render_mode": "whole_character",
+  "pixel_scale": 0.200101,
+  "source_canvas": [
+    1254,
+    1254
+  ],
+  "parts": {
+    "torso": {
+      "rect": [
+        403,
+        364,
+        836,
+        850
+      ],
+      "pivot": [
+        610.54,
+        419.07
+      ],
+      "tip": [
+        636.96,
+        753.86
+      ],
+      "source_slot": "torso",
+      "source_width": 216.71,
+      "workflow_part": "torso_pelvis",
+      "neck": [
+        607.0,
+        457.0
+      ],
+      "shoulders": [
+        [
+          488.2,
+          429.01
+        ],
+        [
+          732.89,
+          409.13
+        ]
+      ],
+      "hips": [
+        [
+          534.66,
+          748.87
+        ],
+        [
+          739.27,
+          758.85
+        ]
+      ]
+    },
+    "head": {
+      "rect": [
+        386,
+        54,
+        836,
+        603
+      ],
+      "pivot": [
+        607.0,
+        457.0
+      ],
+      "tip": [
+        575.37,
+        128.09
+      ],
+      "source_slot": "head",
+      "source_width": 180.94,
+      "workflow_part": "head_neck"
+    },
+    "left_upper_arm": {
+      "rect": [
+        316,
+        381,
+        541,
+        617
+      ],
+      "pivot": [
+        488.2,
+        429.01
+      ],
+      "tip": [
+        382.02,
+        547.02
+      ],
+      "source_slot": "left_upper_arm",
+      "source_width": 141.34,
+      "workflow_part": "near_upper_arm"
+    },
+    "left_forearm": {
+      "rect": [
+        306,
+        479,
+        452,
+        765
+      ],
+      "pivot": [
+        382.02,
+        547.02
+      ],
+      "tip": [
+        359.62,
+        731.4
+      ],
+      "source_slot": "left_forearm",
+      "source_width": 115.82,
+      "workflow_part": "near_forearm_hand"
+    },
+    "right_upper_arm": {
+      "rect": [
+        683,
+        396,
+        838,
+        621
+      ],
+      "pivot": [
+        732.89,
+        409.13
+      ],
+      "tip": [
+        768.64,
+        569.06
+      ],
+      "source_slot": "right_upper_arm",
+      "source_width": 104.07,
+      "workflow_part": "far_upper_arm"
+    },
+    "right_forearm": {
+      "rect": [
+        725,
+        488,
+        990,
+        620
+      ],
+      "pivot": [
+        768.64,
+        569.06
+      ],
+      "tip": [
+        960.22,
+        547.41
+      ],
+      "source_slot": "right_forearm",
+      "source_width": 108.25,
+      "workflow_part": "far_forearm_hand"
+    },
+    "left_thigh": {
+      "rect": [
+        350,
+        677,
+        607,
+        962
+      ],
+      "pivot": [
+        534.66,
+        748.87
+      ],
+      "tip": [
+        423.32,
+        887.21
+      ],
+      "source_slot": "left_thigh",
+      "source_width": 139.43,
+      "workflow_part": "near_thigh"
+    },
+    "right_thigh": {
+      "rect": [
+        668,
+        687,
+        868,
+        951
+      ],
+      "pivot": [
+        739.27,
+        758.85
+      ],
+      "tip": [
+        825.84,
+        876.15
+      ],
+      "source_slot": "right_thigh",
+      "source_width": 139.43,
+      "workflow_part": "far_thigh"
+    },
+    "left_shin": {
+      "rect": [
+        253,
+        814,
+        498,
+        1125
+      ],
+      "pivot": [
+        423.32,
+        887.21
+      ],
+      "tip": [
+        325.2,
+        1045.25
+      ],
+      "source_slot": "left_shin",
+      "source_width": 134.19,
+      "workflow_part": "near_shin"
+    },
+    "right_shin": {
+      "rect": [
+        725,
+        803,
+        892,
+        1131
+      ],
+      "pivot": [
+        825.84,
+        876.15
+      ],
+      "tip": [
+        812.67,
+        1051.48
+      ],
+      "source_slot": "right_shin",
+      "source_width": 129.88,
+      "workflow_part": "far_shin"
+    },
+    "left_boot": {
+      "rect": [
+        214,
+        967,
+        389,
+        1173
+      ],
+      "pivot": [
+        325.2,
+        1045.25
+      ],
+      "tip": [
+        298.09,
+        1170.0
+      ],
+      "source_slot": "left_boot",
+      "source_width": 150.62,
+      "workflow_part": "near_foot"
+    },
+    "right_boot": {
+      "rect": [
+        737,
+        973,
+        990,
+        1166
+      ],
+      "pivot": [
+        812.67,
+        1051.48
+      ],
+      "tip": [
+        874.49,
+        1163.0
+      ],
+      "source_slot": "right_boot",
+      "source_width": 125.9,
+      "workflow_part": "far_foot"
+    }
+  },
+  "attachments": {
+    "back_accessory": {
+      "parent": "torso",
+      "rect": [
+        198,
+        268,
+        606,
+        715
+      ],
+      "image": "back_accessory.png",
+      "layer": "back"
+    },
+    "held_item": {
+      "parent": "right_forearm",
+      "rect": [
+        851,
+        206,
+        1063,
+        1055
+      ],
+      "image": "held_item.png",
+      "layer": "behind_parent"
+    }
+  },
+  "source_analysis": "builds/generated/magician_rig_20260926_v3/inspection/repair/repaired-analysis.json"
+}

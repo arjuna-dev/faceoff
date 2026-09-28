@@ -484,6 +484,29 @@ def correct_ownership_with_bones(labels: np.ndarray, joints: dict[str, Any]) -> 
     return result, moved
 
 
+def upper_arm_top(mask: np.ndarray, elbow: list[float], share: float = 0.2) -> list[float]:
+    """Center of the upper-arm pixels farthest from the elbow: the shoulder end."""
+    ys, xs = np.nonzero(mask)
+    points = np.stack((xs, ys), axis=1).astype(np.float64)
+    distance = np.linalg.norm(points - np.array(elbow, dtype=np.float64), axis=1)
+    far = points[distance >= np.quantile(distance, 1.0 - share)]
+    return [round(float(far[:, 0].mean()), 2), round(float(far[:, 1].mean()), 2)]
+
+
+def place_shoulders_without_dots(joints: dict[str, Any], part_masks: dict[str, np.ndarray]) -> None:
+    """Without a usable dot, a shoulder is the upper arm's end away from the elbow.
+
+    The middle of an arm-torso contact is the armpit side for an arm hanging
+    beside the body, so it is not used for shoulders.
+    """
+    for side in ("near", "far"):
+        shoulder, elbow = joints.get(f"{side}_shoulder"), joints.get(f"{side}_elbow")
+        mask = part_masks.get(f"{side}_upper_arm")
+        if shoulder and elbow and mask is not None and mask.any() and shoulder.get("method") == "contact center":
+            shoulder["center"] = upper_arm_top(mask, elbow["center"])
+            shoulder["method"] = "upper arm end away from the elbow"
+
+
 def place_neck(joints: dict[str, Any], part_masks: dict[str, np.ndarray]) -> str | None:
     """The neck sits above the middle of the shoulders, even when a beard or hair covers it."""
     if "near_shoulder" not in joints or "far_shoulder" not in joints:
@@ -736,6 +759,7 @@ def analyze_and_reconstruct(character_path: Path, map_path: Path, output_dir: Pa
     snapped, _ = snap_labels_to_source(snapped, foreground)
     part_masks = {name: snapped == index for index, name in enumerate(PART_COLORS, start=1)}
     joints, snap_warnings = snap_joints_to_contacts(dots, part_masks)
+    place_shoulders_without_dots(joints, part_masks)
     place_neck(joints, part_masks)
     joint_warnings = [warning for warning in joint_warnings if "more than 24px" not in warning] + [
         warning for warning in snap_warnings if not warning.startswith("neck:")]

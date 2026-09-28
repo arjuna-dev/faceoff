@@ -2,6 +2,9 @@ class_name SkeletonRigSkin
 extends Node2D
 ## Bones use game units. Source pixel scale belongs only to their sprites.
 const CONTRACT_PATH := "res://assets/fighters/rigged/contract.json"
+const WHOLE_CHARACTER := "whole_character"
+## Absolute z for back attachments (wings, capes): behind every limb.
+const BACK_ATTACHMENT_Z := -3
 const PART_ORDER: Array[String] = ["torso", "head", "left_upper_arm", "left_forearm", "right_upper_arm", "right_forearm", "left_thigh", "right_thigh", "left_shin", "right_shin", "left_boot", "right_boot"]
 # Feet tuck under shins, shins under thighs, and both legs cover the pelvis.
 const Z_BY_PART := {"left_upper_arm":-2, "left_forearm":-1, "torso":0, "head":1, "left_boot":2, "right_boot":3, "left_shin":4, "right_shin":5, "left_thigh":6, "right_thigh":7, "right_upper_arm":8, "right_forearm":9}
@@ -20,6 +23,8 @@ var torso_pixels: Image
 var render_mode := ""
 var pixel_scale := 1.0
 var coordinate_reference: Dictionary = {}
+var attachments: Dictionary = {}
+var attachment_sprites: Dictionary = {}
 
 static func _read_json(path: String) -> Dictionary:
 	if not FileAccess.file_exists(path):
@@ -45,6 +50,8 @@ static func valid_profile(directory: String, style: String) -> bool:
 		return false
 	if not profile.get("parts", {}) is Dictionary:
 		return false
+	if profile.get("render_mode", "") == WHOLE_CHARACTER:
+		return _valid_whole_character(directory, profile)
 	var definitions: Dictionary = profile.get("parts", {})
 	var preserved: bool = profile.get("render_mode", "") == "preserve_proportions"
 	if preserved and (not is_finite(float(profile.get("pixel_scale", 0))) or float(profile.get("pixel_scale", 0)) <= 0):
@@ -81,6 +88,35 @@ static func valid_profile(directory: String, style: String) -> bool:
 					return false
 		var width := float(part.get("source_width", 0))
 		if not is_finite(width) or width <= 0 or not ResourceLoader.exists(directory.path_join(name+".png")):
+			return false
+	return true
+
+## Rigs published by tools/export_whole_character_rig.py: parts keep their
+## source shape on the source canvas, with optional rigid attachments.
+static func _valid_whole_character(directory: String, profile: Dictionary) -> bool:
+	var scale := float(profile.get("pixel_scale", 0))
+	var canvas: Array = profile.get("source_canvas", [])
+	var definitions: Dictionary = profile.get("parts", {})
+	if not is_finite(scale) or scale <= 0 or canvas.size() != 2 or definitions.size() != PART_ORDER.size():
+		return false
+	for name in PART_ORDER:
+		var part: Variant = definitions.get(name)
+		if not part is Dictionary or part.get("source_slot", "") != name:
+			return false
+		var rect: Array = part.get("rect", [])
+		if rect.size() != 4 or rect[0] < 0 or rect[1] < 0 or rect[2] > canvas[0] or rect[3] > canvas[1] or rect[2] <= rect[0] or rect[3] <= rect[1]:
+			return false
+		if part.get("pivot", []).size() != 2 or part.get("tip", []).size() != 2 or part.pivot == part.tip:
+			return false
+		if float(part.get("source_width", 0)) <= 0 or not ResourceLoader.exists(directory.path_join(name + ".png")):
+			return false
+	var torso: Dictionary = definitions.torso
+	if torso.get("shoulders", []).size() != 2 or torso.get("hips", []).size() != 2 or torso.get("neck", []).size() != 2:
+		return false
+	for attachment in profile.get("attachments", {}).values():
+		if not attachment is Dictionary or not PART_ORDER.has(attachment.get("parent", "")) or attachment.get("rect", []).size() != 4:
+			return false
+		if not ResourceLoader.exists(directory.path_join(String(attachment.get("image", "")))):
 			return false
 	return true
 
@@ -204,7 +240,33 @@ func configure(style: String, requested_body_type: String = "standard", director
 		bone.add_child(sprite)
 		sprites[part_name] = sprite
 	torso_pixels = sprites["torso"].texture.get_image() if sprites["torso"].texture else null
+	attachments = profile.get("attachments", {})
+	for attachment_name in attachments:
+		_add_attachment(String(attachment_name), attachments[attachment_name], directory)
 	apply_pose(rest_joints, Transform2D.IDENTITY, 1.0)
+
+## A rigid attachment keeps its source placement relative to its parent part,
+## so it moves exactly with that part's sprite.
+func _add_attachment(attachment_name: String, definition: Dictionary, directory: String) -> void:
+	var parent_name := String(definition.parent)
+	var parent: Dictionary = parts[parent_name]
+	var sprite := Sprite2D.new()
+	sprite.name = attachment_name + "Sprite"
+	sprite.texture = load(directory.path_join(String(definition.image))) as Texture2D
+	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	var source_axis := _vector(parent.tip) - _vector(parent.pivot)
+	var basis := Transform2D(-source_axis.angle(), Vector2.ZERO).scaled(Vector2.ONE * pixel_scale)
+	var rect: Array = definition.rect
+	var center := Vector2((float(rect[0]) + float(rect[2])) * 0.5, (float(rect[1]) + float(rect[3])) * 0.5)
+	basis.origin = basis.basis_xform(center - _vector(parent.pivot))
+	sprite.transform = basis
+	if String(definition.get("layer", "")) == "back":
+		sprite.z_as_relative = false
+		sprite.z_index = BACK_ATTACHMENT_Z
+	else:
+		sprite.z_index = -1
+	bones[parent_name].add_child(sprite)
+	attachment_sprites[attachment_name] = sprite
 
 func _vector(value: Variant) -> Vector2:
 	return Vector2(float(value[0]), float(value[1]))
@@ -215,7 +277,7 @@ func _slot_origin(source_slot: String) -> Vector2:
 	return _vector(slots[source_slot].rect)
 
 func preserves_proportions() -> bool:
-	return render_mode == "preserve_proportions"
+	return render_mode == "preserve_proportions" or render_mode == WHOLE_CHARACTER
 
 func uses_authored_shoulders() -> bool:
 	return preserves_proportions() and parts.get("torso", {}).get("shoulders", []).size() == 2
