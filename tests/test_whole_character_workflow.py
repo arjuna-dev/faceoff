@@ -194,6 +194,31 @@ class WholeCharacterWorkflowTests(unittest.TestCase):
             self.assertNotIn("near_thigh", found)
             self.assertNotIn("head_neck", found)
 
+    def test_a_limb_much_shorter_than_its_twin_is_tucked_behind_the_part_in_front(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            folder = Path(temporary)
+            canvas = np.zeros((220, 200), dtype=np.int8)
+            masks = {name: np.zeros((220, 200), dtype=bool) for name in ("torso_pelvis", "near_upper_arm", "far_upper_arm")}
+            masks["torso_pelvis"][20:200, 60:128] = True
+            masks["torso_pelvis"][20:90, 128:170] = True   # the torso covers the far arm's top
+            masks["near_upper_arm"][40:140, 30:58] = True  # 100 px, fully visible
+            masks["far_upper_arm"][90:140, 142:170] = True  # 50 px visible below the torso
+            parts = {}
+            for name, mask in masks.items():
+                ys, xs = np.nonzero(mask)
+                crop = np.zeros((ys.max() - ys.min() + 1, xs.max() - xs.min() + 1, 4), dtype=np.uint8)
+                crop[mask[ys.min():ys.max() + 1, xs.min():xs.max() + 1]] = (*PART_COLOR, 255)
+                Image.fromarray(crop, mode="RGBA").save(folder / f"{name}.png")
+                parts[name] = {"status": "EXTRACTED", "image": str(folder / f"{name}.png"),
+                               "crop_origin": [int(xs.min()), int(ys.min())]}
+            joints = {name: {"center": center} for name, center in {
+                "near_shoulder": [44, 40], "near_elbow": [44, 140],
+                "far_shoulder": [156, 90], "far_elbow": [156, 140]}.items()}
+            found = detect({"canvas": [200, 220], "parts": parts, "joints": joints})
+            self.assertIn("far_upper_arm", found)
+            self.assertIn("tucked behind torso_pelvis", found["far_upper_arm"]["reason"])
+            self.assertNotIn("near_upper_arm", found)
+
     def test_repair_keeps_original_pixels_and_fills_only_marked_area(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             folder = Path(temporary)

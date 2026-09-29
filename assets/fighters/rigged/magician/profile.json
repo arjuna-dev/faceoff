@@ -111,8 +111,8 @@
     },
     "right_upper_arm": {
       "rect": [
-        714,
-        396,
+        698,
+        395,
         848,
         626
       ],
@@ -263,17 +263,6 @@
     }
   },
   "attachments": {
-    "held_item": {
-      "parent": "right_forearm",
-      "rect": [
-        851,
-        206,
-        1063,
-        1055
-      ],
-      "image": "held_item.png",
-      "layer": "behind_parent"
-    },
     "back_accessory": {
       "parent": "torso",
       "rect": [
@@ -284,6 +273,17 @@
       ],
       "image": "back_accessory.png",
       "layer": "back"
+    },
+    "held_item": {
+      "parent": "right_forearm",
+      "rect": [
+        851,
+        206,
+        1063,
+        1055
+      ],
+      "image": "held_item.png",
+      "layer": "behind_parent"
     }
   },
   "layers": [

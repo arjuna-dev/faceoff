@@ -80,6 +80,58 @@ def _hull(mask: np.ndarray) -> np.ndarray:
     return hull.astype(bool)
 
 
+# A limb whose visible bone is shorter than this share of its expected length
+# has its root hidden behind a part drawn in front of it.
+TUCKED_LENGTH_SHARE = 0.9
+TUCKED_CHAINS = {"upper_arm": ("shoulder", "elbow", "forearm_hand"), "thigh": ("hip", "knee", None)}
+
+
+def _capsule(shape: tuple[int, int], start: np.ndarray, end: np.ndarray, radius: float) -> np.ndarray:
+    yy, xx = np.mgrid[0:shape[0], 0:shape[1]]
+    points = np.stack((xx.ravel(), yy.ravel()), axis=1).astype(np.float64)
+    direction = end - start
+    t = np.clip(((points - start) @ direction) / max(1e-6, float(direction @ direction)), 0.0, 1.0)
+    distance = np.linalg.norm(points - (start + t[:, None] * direction), axis=1)
+    return (distance <= radius).reshape(shape)
+
+
+def _tucked_limb(name: str, own: np.ndarray, masks: dict[str, np.ndarray], front: list[str],
+                 joints: dict[str, Any]) -> dict[str, Any] | None:
+    """An upper arm or thigh much shorter than its twin is tucked behind a front part.
+
+    The hidden part is a limb-wide band along the bone, from the visible root
+    up to where the root would be at the expected length.
+    """
+    side, _, kind = name.partition("_")
+    if side not in ("near", "far") or kind not in TUCKED_CHAINS:
+        return None
+    root_joint, end_joint, next_part = TUCKED_CHAINS[kind]
+    twin = ("far" if side == "near" else "near")
+    center = {key: np.array(value["center"], dtype=np.float64) for key, value in joints.items()}
+    root, end = center.get(f"{side}_{root_joint}"), center.get(f"{side}_{end_joint}")
+    if root is None or end is None:
+        return None
+    visible = float(np.linalg.norm(root - end))
+    expected = [float(np.linalg.norm(center[f"{twin}_{root_joint}"] - center[f"{twin}_{end_joint}"]))] \
+        if f"{twin}_{root_joint}" in center and f"{twin}_{end_joint}" in center else []
+    if next_part and masks.get(f"{side}_{next_part}") is not None and masks[f"{side}_{next_part}"].any():
+        ys, xs = np.nonzero(masks[f"{side}_{next_part}"])
+        reach = np.linalg.norm(np.stack((xs, ys), axis=1) - end, axis=1)
+        expected.append(0.85 * float(np.quantile(reach, 0.9)))
+    if not expected or visible <= 0 or visible >= TUCKED_LENGTH_SHARE * max(expected):
+        return None
+    target = end + (root - end) / visible * max(expected)
+    radius = float(cv2.distanceTransform(own.astype(np.uint8), cv2.DIST_L2, 3).max())
+    front_union = np.any([masks[other] for other in front], axis=0) if front else np.zeros_like(own)
+    fill = _capsule(own.shape, target, root, radius) & front_union & ~own
+    if int(fill.sum()) < MIN_HOLE_PX:
+        return None
+    behind = sorted(other for other in front if (masks[other] & fill).any())
+    return {"fill": fill, "behind": behind,
+            "finding": f"tucked behind {', '.join(behind)}: visible bone {visible:.0f} px of an expected "
+                       f"{max(expected):.0f} px"}
+
+
 def detect(analysis: dict[str, Any]) -> dict[str, Any]:
     from render_whole_character_poses import draw_order
     from whole_character_workflow import JOINTS
@@ -148,6 +200,10 @@ def detect(analysis: dict[str, Any]) -> dict[str, Any]:
             occluders.update(wraps)
             findings.append("wraps around " + ", ".join(
                 f"{other} ({share:.0%} of its outline touches this part)" for other, share in wraps.items()))
+        tucked = _tucked_limb(name, own, masks, front, analysis.get("joints", {}))
+        if tucked is not None:
+            occluders.update(tucked["behind"])
+            findings.append(tucked["finding"])
         if not findings:
             continue
         hull = _hull(own)
@@ -164,7 +220,15 @@ def detect(analysis: dict[str, Any]) -> dict[str, Any]:
             fill |= region
             covered_by[other] = int(region.sum())
         fill &= ~covered_by_overlaps
-        minimum_fill = max(MIN_FILL_PX, int(area * MIN_FILL_SHARE))
+        if tucked is not None:
+            # The hidden top of a tucked limb is repaired even inside its joint
+            # circle: the overlap there carries the neighbor's art, not the limb's.
+            fill |= tucked["fill"]
+            for other in tucked["behind"]:
+                covered_by[other] = covered_by.get(other, 0) + int((tucked["fill"] & masks[other]).sum())
+        # A tucked limb's hidden root is what a moving limb uncovers first, so it
+        # is worth repairing even when small.
+        minimum_fill = MIN_HOLE_PX if tucked is not None else max(MIN_FILL_PX, int(area * MIN_FILL_SHARE))
         if int(fill.sum()) < minimum_fill:
             continue
         results[name] = {"reason": "; ".join(findings), "occluders": sorted(occluders),

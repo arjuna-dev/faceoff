@@ -48,6 +48,11 @@ func _run() -> void:
 	p.held_targets[near_hand] = Vector2(10, -90)
 	p._solve_pose()
 	await _capture("magician-fight-raise")
+	p.return_to_guard()
+	# Rear arm raised high: its hidden top must not leave a gap.
+	p.held_targets[staff_hand] = Vector2(20, -90)
+	p._solve_pose()
+	await _capture("magician-fight-rear-raise")
 	main._on_fighter_selection_confirmed("magician", "magician")
 	main.player.set_physics_process(false)
 	main.opponent.set_physics_process(false)
