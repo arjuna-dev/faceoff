@@ -30,6 +30,9 @@ var selected_limb_index := 0
 var bodies: Dictionary = {}
 var active_drags: Dictionary = {}
 var held_targets: Dictionary = {}
+## Forward extent of a hand at the moment it was grabbed, so grabbing a drawn
+## pose never pulls the hand back to the shared forward limit.
+var grab_forward_extent: Dictionary = {}
 var dragging_limb := ""
 var crouch := 0.0
 var lean := 0.0
@@ -427,13 +430,22 @@ func _solve_pose() -> void:
 		var authored_shoulders: bool = skeleton_skin != null and skeleton_skin.uses_authored_shoulders()
 		var control_origin := shoulder if authored_shoulders else arm_root
 		var control_reach: float = skeleton_skin.arm_control_reach(ARM_REACH) if authored_shoulders else ARM_REACH
-		if held_targets.has(side + "_forearm"):
+		if not rest.is_empty():
+			# Each hand moves around its own shoulder, as far as its arm reaches.
+			control_origin = arm_root
+			control_reach = skeleton_skin.segment_length(side+"_upper_arm", ARM_UPPER_LENGTH) + skeleton_skin.segment_length(side+"_forearm", ARM_FOREARM_LENGTH) - 0.1
+		var held_hand := held_targets.has(side + "_forearm")
+		if held_hand:
 			hand = control_origin + Vector2(held_targets[side + "_forearm"]).limit_length(control_reach)
 		hand += Vector2(lean * 0.28, head_drop * 0.22)
-		# The shared control circle limits where a player can drag a hand; a
-		# rig's own drawn rest hand may hang outside it.
-		if authored_shoulders and (rest.is_empty() or held_targets.has(side + "_forearm")):
+		if authored_shoulders and rest.is_empty():
 			hand = control_origin + (hand-control_origin).limit_length(control_reach)
+		elif held_hand and not rest.is_empty():
+			hand = control_origin + (hand-control_origin).limit_length(control_reach)
+			# Equal forward reach: both hands stop at the same forward line,
+			# set by whichever arm reaches less far forward.
+			var forward_limit: float = maxf(skeleton_skin.shared_forward_reach(hip - shoulder), float(grab_forward_extent.get(side, -INF)))
+			hand.x = minf(hand.x, shoulder.x + forward_limit)
 		var upper_length := ARM_UPPER_LENGTH
 		var forearm_length := ARM_FOREARM_LENGTH
 		if skeleton_skin:
@@ -521,6 +533,9 @@ func _start_pointer_drag_at(point: Vector2, id: int = -1) -> void:
 	active_drags[id] = {"limb": limb, "start": point, "target": point, "offset": point - bodies[limb].global_position, "crouch": crouch, "lean": lean, "head_drop": head_drop, "travel": 0.0, "spent": false, "direction": Vector2.ZERO, "last_time": Time.get_ticks_usec(), "stance_height": stance_height, "up_travel": 0.0, "strikes": {}}
 	if limb == "torso":
 		body_stroke.clear()
+	if limb.ends_with("forearm"):
+		var side := "left" if limb.begins_with("left") else "right"
+		grab_forward_extent[side] = float(Vector2(joints[side + "_hand"]).x - Vector2(joints.shoulder).x)
 	dragging_limb = limb
 	limb_selected.emit(self, selected_limb_name())
 
@@ -554,7 +569,10 @@ func _update_pointer_drag(id: int, point: Vector2, sample_seconds: float = -1.0)
 		local.x *= facing_direction
 		var side: String = "left" if drag.limb.begins_with("left") else "right"
 		var anchor: Vector2 = joints[side + ("_shoulder" if drag.limb.ends_with("forearm") else "_hip")]
-		if drag.limb.ends_with("forearm") and skeleton_skin and skeleton_skin.uses_authored_shoulders():
+		# Whole-character rigs drag each hand around its own shoulder; other
+		# authored-shoulder rigs share a torso-centered control circle.
+		if drag.limb.ends_with("forearm") and skeleton_skin and skeleton_skin.uses_authored_shoulders() \
+				and skeleton_skin.authored_rest().is_empty():
 			anchor = joints.shoulder
 		if drag.limb.ends_with("thigh"):
 			held_targets.erase(side + "_shin")

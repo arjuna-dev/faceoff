@@ -48,6 +48,21 @@ func _run() -> void:
 		check(sprite.texture.get_size() == Vector2(rect[2] - rect[0], rect[3] - rect[1]), name + " texture matches its rectangle")
 		var drawn: Vector2 = player.global_position + (Vector2((rect[0] + rect[2]) * 0.5, (rect[1] + rect[3]) * 0.5) - ground) * skin.pixel_scale + Vector2(0, skin.AUTHORED_FOOT_Y)
 		check(sprite.global_position.distance_to(drawn) < 3.0, name + " rests where it was drawn")
+	# Grabbing a hand without moving it must not pull it in, and dragging it
+	# swings the arm around its own shoulder.
+	for side in ["left", "right"]:
+		var limb: String = side + "_forearm"
+		var hand_rest: Vector2 = player.bodies[limb].global_position
+		var shoulder_rest: Vector2 = player.joints[side + "_shoulder"]
+		player._start_pointer_drag_at(hand_rest, 11)
+		player._update_pointer_drag(11, hand_rest, 0.05)
+		check(player.bodies[limb].global_position.distance_to(hand_rest) < 1.5, side + " hand stays put when grabbed")
+		player._update_pointer_drag(11, hand_rest + Vector2(30, -40), 0.05)
+		check(Vector2(player.joints[side + "_shoulder"]).distance_to(shoulder_rest) < 1.0, side + " arm keeps its own shoulder while dragged")
+		var arm_length: float = skin.segment_length(side + "_upper_arm", 0.0) + skin.segment_length(side + "_forearm", 0.0)
+		check(Vector2(player.joints[side + "_hand"]).distance_to(player.joints[side + "_shoulder"]) <= arm_length, side + " hand stays within its arm's reach")
+		player._end_pointer_drag(11)
+		player.return_to_guard()
 	var staff: Sprite2D = skin.attachment_sprites["held_item"]
 	var hand_limb := String(skin.attachments["held_item"]["parent"])
 	check(staff.get_parent() == skin.bones[hand_limb], "the staff rides on the hand holding it")

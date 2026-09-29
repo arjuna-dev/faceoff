@@ -311,6 +311,15 @@ func authored_rest() -> Dictionary:
 	_authored_rest_cache = rest
 	return rest
 
+## How far forward of the torso's shoulder point both hands can reach: the
+## smaller of the two arms' forward extents, so front and rear arms match.
+func shared_forward_reach(torso_axis: Vector2) -> float:
+	var reach := INF
+	for side in ["left", "right"]:
+		var length := segment_length(side+"_upper_arm", 0.0) + segment_length(side+"_forearm", 0.0) - 0.1
+		reach = minf(reach, arm_root_offset(side, torso_axis).x + length)
+	return reach
+
 static func _bend_side(root: Vector2, end: Vector2, middle: Vector2) -> float:
 	var axis := (end - root).normalized()
 	return -1.0 if (middle - root).dot(axis.orthogonal()) < 0.0 else 1.0
