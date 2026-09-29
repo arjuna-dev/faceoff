@@ -3,7 +3,7 @@
   "fighter_id": "magician",
   "body_type": "standard",
   "render_mode": "whole_character",
-  "pixel_scale": 0.198403,
+  "pixel_scale": 0.198406,
   "source_canvas": [
     1254,
     1254
@@ -11,14 +11,14 @@
   "parts": {
     "torso": {
       "rect": [
-        403,
-        355,
+        404,
+        351,
         836,
         850
       ],
       "pivot": [
-        612.22,
-        416.06
+        612.16,
+        416.07
       ],
       "tip": [
         636.96,
@@ -28,8 +28,8 @@
       "source_width": 216.71,
       "workflow_part": "torso_pelvis",
       "neck": [
-        614.0,
-        393.0
+        615.0,
+        394.0
       ],
       "shoulders": [
         [
@@ -37,8 +37,8 @@
           427.37
         ],
         [
-          734.75,
-          404.76
+          734.65,
+          404.78
         ]
       ],
       "hips": [
@@ -60,12 +60,12 @@
         603
       ],
       "pivot": [
-        614.0,
-        393.0
+        615.0,
+        394.0
       ],
       "tip": [
-        575.4,
-        128.23
+        574.19,
+        127.95
       ],
       "source_slot": "head",
       "source_width": 155.03,
@@ -73,10 +73,10 @@
     },
     "left_upper_arm": {
       "rect": [
-        316,
-        447,
-        503,
-        617
+        313,
+        398,
+        539,
+        627
       ],
       "pivot": [
         489.68,
@@ -87,7 +87,7 @@
         547.02
       ],
       "source_slot": "left_upper_arm",
-      "source_width": 141.34,
+      "source_width": 141.44,
       "workflow_part": "near_upper_arm"
     },
     "left_forearm": {
@@ -111,21 +111,21 @@
     },
     "right_upper_arm": {
       "rect": [
-        718,
+        714,
         396,
-        838,
-        620
+        848,
+        626
       ],
       "pivot": [
-        734.75,
-        404.76
+        734.65,
+        404.78
       ],
       "tip": [
         768.64,
         569.06
       ],
       "source_slot": "right_upper_arm",
-      "source_width": 102.84,
+      "source_width": 107.24,
       "workflow_part": "far_upper_arm"
     },
     "right_forearm": {
@@ -149,10 +149,10 @@
     },
     "left_thigh": {
       "rect": [
-        350,
+        338,
         756,
         570,
-        962
+        974
       ],
       "pivot": [
         534.66,
@@ -163,13 +163,13 @@
         887.21
       ],
       "source_slot": "left_thigh",
-      "source_width": 129.37,
+      "source_width": 133.36,
       "workflow_part": "near_thigh"
     },
     "right_thigh": {
       "rect": [
-        668,
-        687,
+        656,
+        675,
         868,
         882
       ],
@@ -182,15 +182,15 @@
         876.15
       ],
       "source_slot": "right_thigh",
-      "source_width": 139.43,
+      "source_width": 152.53,
       "workflow_part": "far_thigh"
     },
     "left_shin": {
       "rect": [
-        253,
+        244,
         834,
         489,
-        1125
+        1137
       ],
       "pivot": [
         423.32,
@@ -207,7 +207,7 @@
     "right_shin": {
       "rect": [
         725,
-        803,
+        791,
         881,
         1064
       ],
@@ -245,7 +245,7 @@
     "right_boot": {
       "rect": [
         737,
-        973,
+        961,
         990,
         1166
       ],
@@ -254,7 +254,7 @@
         1051.48
       ],
       "tip": [
-        874.49,
+        873.59,
         1163.0
       ],
       "source_slot": "right_boot",

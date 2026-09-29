@@ -199,8 +199,8 @@ def build(run: Path) -> Path:
         if overlaps:
             body += ('<p class="note">At every joint, the part drawn underneath also carries its neighbor\'s '
                      "artwork inside the white circle, so a rotation shows overlap instead of a hard cut or gap; "
-                     "the part on top stays exact. Circle radius is 1.3x "
-                     "the rotating child part's half-width near the pivot, clamped to 32-90 px; near and far joints "
+                     "the part on top stays exact. Circle radius is 1.5x "
+                     "the rotating child part's half-width near the pivot, clamped to 32-100 px; near and far joints "
                      "share the larger radius.</p>")
             body += page.gallery([page.image(inspection / "joint-overlaps.png", "joint overlap circles")])
             rows = "".join(f"<tr><td>{html.escape(item['joint'])}</td><td>{item['radius_px']}</td>"

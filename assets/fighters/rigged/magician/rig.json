@@ -6,7 +6,7 @@
     1254,
     1254
   ],
-  "profile_sha256": "bfcb933f9fdf90d7a3bb5cd41399169bafd050b1d2b6034c34c1e9a839f8ed21",
+  "profile_sha256": "c274006cda756b9add25dd4e805b32939250d0d68a035465f4cd04610cef564a",
   "contract_sha256": "60fb1ef8ff61456bda7119a4966910d70310b6750c982f300cd638b4ed5d0419",
   "note": "Candidate from tools/whole_character_workflow.py; not part of the v3 atlas review."
 }

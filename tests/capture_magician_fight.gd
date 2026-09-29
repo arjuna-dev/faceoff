@@ -42,6 +42,12 @@ func _run() -> void:
 	p.held_targets[staff_hand] = Vector2(200, -10)
 	p._solve_pose()
 	await _capture("magician-fight-reach")
+	p.return_to_guard()
+	# Near arm raised high: the shoulder overlap must hide any gap.
+	var near_hand := "left_forearm" if staff_hand == "right_forearm" else "right_forearm"
+	p.held_targets[near_hand] = Vector2(10, -90)
+	p._solve_pose()
+	await _capture("magician-fight-raise")
 	main._on_fighter_selection_confirmed("magician", "magician")
 	main.player.set_physics_process(false)
 	main.opponent.set_physics_process(false)

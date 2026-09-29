@@ -70,6 +70,8 @@ COUNTERPART_BONE_RATIO = 0.6
 COUNTERPART_MIN_PX = 25
 # The neck is this share of the shoulder width above the shoulders' midpoint.
 NECK_ABOVE_SHOULDERS = 0.15
+# A sleeve is claimed by its arm within this multiple of the arm's half-width.
+SLEEVE_WIDTH_SCALE = 1.15
 # Isolated foreground specks smaller than this are background noise.
 MIN_ARTWORK_SPECK_PX = 64
 # A model-drawn canvas frame up to this thick is replaced with background.
@@ -78,9 +80,9 @@ FRAME_EDGE_PX = 3
 # Joint overlap circle: radius = scale x the child part's half-width near the
 # pivot, clamped. JOINTS lists (joint, parent, child).
 JOINT_PROBE_PX = 80
-JOINT_OVERLAP_SCALE = 1.3
+JOINT_OVERLAP_SCALE = 1.5
 JOINT_OVERLAP_MIN_PX = 32
-JOINT_OVERLAP_MAX_PX = 90
+JOINT_OVERLAP_MAX_PX = 100
 
 
 def rgb(hex_color: str) -> tuple[int, int, int]:
@@ -507,6 +509,42 @@ def place_shoulders_without_dots(joints: dict[str, Any], part_masks: dict[str, n
             shoulder["method"] = "upper arm end away from the elbow"
 
 
+def claim_sleeves(labels: np.ndarray, joints: dict[str, Any]) -> tuple[np.ndarray, dict[str, int]]:
+    """Torso pixels lying along an upper arm's bone belong to the arm.
+
+    Maps often paint a sleeve or shoulder pad as torso. A torso pixel between
+    the shoulder and elbow, within the arm's width of that bone, and closer to
+    it than to the spine, is arm.
+    """
+    index = {name: position for position, name in enumerate(PART_COLORS, start=1)}
+    result = labels.copy()
+    moved: dict[str, int] = {}
+    center = {name: np.array(joint["center"], dtype=np.float64) for name, joint in joints.items()}
+    if not all(key in center for key in ("near_shoulder", "far_shoulder", "near_hip", "far_hip")):
+        return result, moved
+    spine = ((center["near_shoulder"] + center["far_shoulder"]) / 2, (center["near_hip"] + center["far_hip"]) / 2)
+    for side in ("near", "far"):
+        shoulder, elbow = center.get(f"{side}_shoulder"), center.get(f"{side}_elbow")
+        if shoulder is None or elbow is None:
+            continue
+        arm = np.zeros(labels.shape, dtype=np.uint8)
+        arm[(labels == index[f"{side}_upper_arm"]) | (labels == index[f"{side}_forearm_hand"])] = 1
+        if not arm.any():
+            continue
+        half_width = float(cv2.distanceTransform(arm, cv2.DIST_L2, 3).max()) * SLEEVE_WIDTH_SCALE
+        ys, xs = np.nonzero(result == index["torso_pelvis"])
+        points = np.stack((xs, ys), axis=1).astype(np.float64)
+        axis = elbow - shoulder
+        t = ((points - shoulder) @ axis) / max(1e-6, float(axis @ axis))
+        near_arm = _segment_distance(points, shoulder, elbow)
+        near_spine = _segment_distance(points, *spine)
+        claim = (t > 0.0) & (t <= 1.0) & (near_arm <= half_width) & (near_arm < near_spine)
+        if claim.any():
+            result[ys[claim], xs[claim]] = index[f"{side}_upper_arm"]
+            moved[f"torso along the {side} upper arm -> {side}_upper_arm"] = int(claim.sum())
+    return result, moved
+
+
 def place_neck(joints: dict[str, Any], part_masks: dict[str, np.ndarray]) -> str | None:
     """The neck sits above the middle of the shoulders, even when a beard or hair covers it."""
     if "near_shoulder" not in joints or "far_shoulder" not in joints:
@@ -760,6 +798,8 @@ def analyze_and_reconstruct(character_path: Path, map_path: Path, output_dir: Pa
     dots, joint_warnings = assign_joints(markers, first_masks)
     first_joints, _ = snap_joints_to_contacts(dots, first_masks)
     snapped, bone_moves = correct_ownership_with_bones(snapped, first_joints)
+    snapped, sleeve_moves = claim_sleeves(snapped, first_joints)
+    bone_moves.update(sleeve_moves)
     snapped, _ = snap_labels_to_source(snapped, foreground)
     part_masks = {name: snapped == index for index, name in enumerate(PART_COLORS, start=1)}
     joints, snap_warnings = snap_joints_to_contacts(dots, part_masks)
