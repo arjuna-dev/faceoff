@@ -24,6 +24,9 @@ var render_mode := ""
 var pixel_scale := 1.0
 var coordinate_reference: Dictionary = {}
 var attachments: Dictionary = {}
+var _authored_rest_cache: Dictionary = {}
+## Planted feet stand this far above the node origin, like the shared stance.
+const AUTHORED_FOOT_Y := -5.0
 var attachment_sprites: Dictionary = {}
 
 static func _read_json(path: String) -> Dictionary:
@@ -275,6 +278,42 @@ func _slot_origin(source_slot: String) -> Vector2:
 	if preserves_proportions():
 		return _vector(parts[source_slot].rect)
 	return _vector(slots[source_slot].rect)
+
+## Whole-character rigs were drawn as one standing character, so their own
+## drawn pose is the fighter's rest stance. Joints are in game units, facing
+## right, with the node origin between the feet on the ground. Other rigs
+## return {} and keep the game's shared stance.
+func authored_rest() -> Dictionary:
+	if render_mode != WHOLE_CHARACTER:
+		return {}
+	if not _authored_rest_cache.is_empty():
+		return _authored_rest_cache
+	var left_sole := _vector(parts.left_boot.tip)
+	var right_sole := _vector(parts.right_boot.tip)
+	var origin := Vector2((left_sole.x + right_sole.x) * 0.5, maxf(left_sole.y, right_sole.y))
+	var game := func(point: Vector2) -> Vector2:
+		return (point - origin) * pixel_scale + Vector2(0, AUTHORED_FOOT_Y)
+	var rest := {"hip": game.call(_vector(parts.torso.tip)), "shoulder": game.call(_vector(parts.torso.pivot))}
+	for side in ["left", "right"]:
+		var shoulder: Vector2 = game.call(_vector(parts[side+"_upper_arm"].pivot))
+		var elbow: Vector2 = game.call(_vector(parts[side+"_upper_arm"].tip))
+		var hand: Vector2 = game.call(_vector(parts[side+"_forearm"].tip))
+		var hip: Vector2 = game.call(_vector(parts[side+"_thigh"].pivot))
+		var knee: Vector2 = game.call(_vector(parts[side+"_thigh"].tip))
+		var ankle: Vector2 = game.call(_vector(parts[side+"_shin"].tip))
+		var foot: Vector2 = game.call(_vector(parts[side+"_boot"].tip))
+		rest[side+"_hand"] = hand
+		rest[side+"_foot"] = foot
+		rest[side+"_boot_direction"] = (foot - ankle).normalized() if foot != ankle else Vector2.DOWN
+		# Which way the elbow and knee bend, in the solver's _bend convention.
+		rest[side+"_elbow_bend"] = _bend_side(shoulder, hand, elbow)
+		rest[side+"_knee_bend"] = _bend_side(hip, ankle, knee)
+	_authored_rest_cache = rest
+	return rest
+
+static func _bend_side(root: Vector2, end: Vector2, middle: Vector2) -> float:
+	var axis := (end - root).normalized()
+	return -1.0 if (middle - root).dot(axis.orthogonal()) < 0.0 else 1.0
 
 func preserves_proportions() -> bool:
 	return render_mode == "preserve_proportions" or render_mode == WHOLE_CHARACTER

@@ -26,6 +26,19 @@ It writes `assets/fighters/rigged/<id>/` with `render_mode: "whole_character"`:
   item rides rigidly on the hand holding it, just behind that hand.
 - `rig.json` holds the profile and contract hashes; `SkeletonRigSkin` rejects a
   stale or hand-edited profile.
+- The exporter re-imports the textures with Godot afterwards. The game draws
+  Godot's imported copies, and running it without the editor never re-imports a
+  changed PNG, so a skipped import shows old part images on the new pivots.
+
+## Rest stance
+
+Other fighters share one fighting stance defined in `RagdollCharacter._solve_pose`.
+A whole-character rig instead stands in its own drawn pose:
+`SkeletonRigSkin.authored_rest()` converts the drawn joints to game units with
+the feet on the ground (hip, shoulders, hands, feet, and which way each elbow
+and knee bends), and the solver uses them as its rest positions. Crouch, lean,
+walking and dragging still move the fighter from there, and the drag reach
+limit applies only while a hand is being dragged.
 
 To make it playable, add `data/<id>.tres` (`visual_style = "<id>"`, and
 `sprite_set` if it has sprite animations), then add the id to

@@ -337,8 +337,13 @@ func _physics_process(delta: float) -> void:
 
 func _solve_pose() -> void:
 	var bob := floorf(sin(animation_time * 5.0) * 1.5) * 2.0
+	# Whole-character rigs stand in their own drawn pose; others share one stance.
+	var rest: Dictionary = skeleton_skin.authored_rest() if skeleton_skin else {}
 	var hip := Vector2(-6, -105 + crouch * 0.65 + bob - stance_height)
 	var shoulder := Vector2(lean * 0.7, -172 + crouch + bob + absf(lean) * 0.25 - stance_height)
+	if not rest.is_empty():
+		hip = Vector2(rest.hip) + Vector2(0, crouch * 0.65 + bob - stance_height)
+		shoulder = Vector2(rest.shoulder) + Vector2(lean * 0.7, crouch + bob + absf(lean) * 0.25 - stance_height)
 	if skeleton_skin and skeleton_skin.preserves_proportions():
 		shoulder = hip - (hip - shoulder).normalized() * skeleton_skin.segment_length("torso", 67.0)
 	var head := shoulder + Vector2(8 + lean * 0.3, -30 + head_drop)
@@ -351,14 +356,18 @@ func _solve_pose() -> void:
 	for side in ["left", "right"]:
 		var front: bool = side == "right"
 		var step := sin(walk_phase + (0.0 if front else PI)) if was_walking else 0.0
-		var foot := Vector2(((36.0 if front else -43.0) * (1.0 - stance_height / 32.0 * 0.7)) + step * 22.0, -5.0 - maxf(0.0, cos(walk_phase + (0.0 if front else PI))) * 14.0 if was_walking else -5.0)
+		var foot_x: float = float(Vector2(rest[side + "_foot"]).x) if not rest.is_empty() else (36.0 if front else -43.0)
+		var foot_y: float = float(Vector2(rest[side + "_foot"]).y) if not rest.is_empty() else -5.0
+		var foot := Vector2((foot_x * (1.0 - stance_height / 32.0 * 0.7)) + step * 22.0, foot_y - maxf(0.0, cos(walk_phase + (0.0 if front else PI))) * 14.0 if was_walking else foot_y)
 		var leg_root := hip + Vector2(10 if front else -11, 0)
 		if skeleton_skin:
 			leg_root = hip + skeleton_skin.hip_offset(side, hip-shoulder)
 		if held_targets.has(side + "_shin"):
 			foot = leg_root + Vector2(held_targets[side + "_shin"])
 		foot = leg_root + (foot - leg_root).limit_length(FOOT_REACH)
-		var knee := _bend(leg_root, foot, LEG_LENGTH, LEG_LENGTH, 1.0)
+		var knee_bend: float = float(rest.get(side + "_knee_bend", 1.0))
+		var rest_boot: Vector2 = rest.get(side + "_boot_direction", Vector2.DOWN)
+		var knee := _bend(leg_root, foot, LEG_LENGTH, LEG_LENGTH, knee_bend)
 		var ankle := foot
 		var boot_direction := Vector2.DOWN
 		var thigh_length := LEG_LENGTH
@@ -371,13 +380,13 @@ func _solve_pose() -> void:
 			boot_length = skeleton_skin.segment_length(side+"_boot", 32.0)
 			var lift := clampf((-foot.y - 15.0)/40.0, 0.0, 1.0)
 			for iteration in 4:
-				boot_direction = Vector2.DOWN.rotated(lerp_angle(0.0, Vector2.DOWN.angle_to((foot-knee).normalized()), lift))
+				boot_direction = rest_boot.rotated(lerp_angle(0.0, rest_boot.angle_to((foot-knee).normalized()), lift))
 				var offset := (foot - boot_direction * boot_length - leg_root).limit_length(thigh_length+shin_length-0.1)
 				var minimum := absf(thigh_length-shin_length)+0.1
 				if offset.length() < minimum:
 					offset = (offset.normalized() if not offset.is_zero_approx() else Vector2.DOWN)*minimum
 				ankle = leg_root + offset
-				knee = _bend(leg_root, ankle, thigh_length, shin_length, 1.0)
+				knee = _bend(leg_root, ankle, thigh_length, shin_length, knee_bend)
 			foot = ankle + boot_direction * boot_length
 		if held_targets.has(side + "_thigh"):
 			knee = leg_root + Vector2(held_targets[side + "_thigh"]).limit_length(LEG_LENGTH - 1.0)
@@ -412,13 +421,18 @@ func _solve_pose() -> void:
 		if skeleton_skin:
 			guard_offset = skeleton_skin.guard_offset(front, guard_beat)
 		var hand := shoulder + guard_offset
+		if not rest.is_empty():
+			# The drawn hand position, moving with the torso and a small guard beat.
+			hand = Vector2(rest[side + "_hand"]) + (shoulder - Vector2(rest.shoulder)) + Vector2(0, guard_beat * 0.5)
 		var authored_shoulders: bool = skeleton_skin != null and skeleton_skin.uses_authored_shoulders()
 		var control_origin := shoulder if authored_shoulders else arm_root
 		var control_reach: float = skeleton_skin.arm_control_reach(ARM_REACH) if authored_shoulders else ARM_REACH
 		if held_targets.has(side + "_forearm"):
 			hand = control_origin + Vector2(held_targets[side + "_forearm"]).limit_length(control_reach)
 		hand += Vector2(lean * 0.28, head_drop * 0.22)
-		if authored_shoulders:
+		# The shared control circle limits where a player can drag a hand; a
+		# rig's own drawn rest hand may hang outside it.
+		if authored_shoulders and (rest.is_empty() or held_targets.has(side + "_forearm")):
 			hand = control_origin + (hand-control_origin).limit_length(control_reach)
 		var upper_length := ARM_UPPER_LENGTH
 		var forearm_length := ARM_FOREARM_LENGTH
@@ -438,7 +452,7 @@ func _solve_pose() -> void:
 		# the opposite bend and keeps that established deformation direction.
 		var elbow_direction := 1.0 if profile.visual_style in ["jade", "oculon"] else -1.0
 		if skeleton_skin:
-			elbow_direction = -1.0
+			elbow_direction = float(rest.get(side + "_elbow_bend", -1.0))
 		var elbow := _bend(arm_root, hand, upper_length, forearm_length, elbow_direction)
 		joints[side + "_shoulder"] = arm_root
 		joints[side + "_elbow"] = elbow

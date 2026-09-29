@@ -263,17 +263,6 @@
     }
   },
   "attachments": {
-    "back_accessory": {
-      "parent": "torso",
-      "rect": [
-        198,
-        268,
-        606,
-        715
-      ],
-      "image": "back_accessory.png",
-      "layer": "back"
-    },
     "held_item": {
       "parent": "right_forearm",
       "rect": [
@@ -284,6 +273,17 @@
       ],
       "image": "held_item.png",
       "layer": "behind_parent"
+    },
+    "back_accessory": {
+      "parent": "torso",
+      "rect": [
+        198,
+        268,
+        606,
+        715
+      ],
+      "image": "back_accessory.png",
+      "layer": "back"
     }
   },
   "source_analysis": "builds/generated/magician_rig_20260926_v3/inspection/repair/repaired-analysis.json"

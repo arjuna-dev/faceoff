@@ -49,6 +49,19 @@ SIDES = ("near", "far")  # order of the torso's [left, right] landmarks
 # joint sits higher inside the body: move the pivot up the arm, not the art.
 MIN_UPPER_TO_FOREARM = 0.85
 ATTACHMENTS = {"back_accessory", "held_item"}
+DEFAULT_GODOT = Path("/Applications/Godot-4.5.2.app/Contents/MacOS/Godot")
+
+
+def reimport(godot: Path) -> None:
+    """Refresh Godot's imported textures. The game draws imported copies, and
+    running it without the editor never re-imports changed PNGs."""
+    import subprocess
+    subprocess.run([str(godot), "--headless", "--path", str(ROOT), "--editor", "--quit"],
+                   check=True, capture_output=True, timeout=900)
+
+
+# Part images are written with copyfile, never copy2: copy2 keeps the source's
+# old modification time, and Godot then skips re-importing the changed PNG.
 
 
 def sha256(path: Path) -> str:
@@ -131,7 +144,7 @@ def export(analysis_path: Path, fighter: str, output: Path | None = None) -> Pat
         pivot, tip = axes[name]
         if pivot == tip:
             tip = [tip[0], tip[1] + 1.0]
-        shutil.copy2(parts[name]["image"], target / f"{slot}.png")
+        shutil.copyfile(parts[name]["image"], target / f"{slot}.png")
         profile_parts[slot] = {"rect": rect(parts[name]), "pivot": pivot, "tip": tip,
                                "source_slot": slot, "source_width": width(parts[name]), "workflow_part": name}
     profile_parts["torso"].update({"neck": joints["neck"], "shoulders": shoulders, "hips": hips})
@@ -141,7 +154,7 @@ def export(analysis_path: Path, fighter: str, output: Path | None = None) -> Pat
         if metadata.get("status") != "EXTRACTED":
             continue
         parent = "torso" if name == "back_accessory" else SLOTS[metadata.get("attached_to", "near_forearm_hand")]
-        shutil.copy2(metadata["image"], target / f"{name}.png")
+        shutil.copyfile(metadata["image"], target / f"{name}.png")
         attachments[name] = {"parent": parent, "rect": rect(metadata), "image": f"{name}.png",
                              # Back accessories sit behind everything; a held item just behind its hand.
                              "layer": "back" if name == "back_accessory" else "behind_parent"}
@@ -154,7 +167,7 @@ def export(analysis_path: Path, fighter: str, output: Path | None = None) -> Pat
     profile_path = target / "profile.json"
     profile_path.write_text(json.dumps(profile, indent=2) + "\n", encoding="utf-8")
     # The fighter-select card shows this head.
-    shutil.copy2(parts["head_neck"]["image"], target / "head.png")
+    shutil.copyfile(parts["head_neck"]["image"], target / "head.png")
     manifest = {"version": 3, "fighter_id": fighter, "workflow": "whole_character", "canvas": analysis["canvas"],
                 "profile_sha256": sha256(profile_path), "contract_sha256": sha256(CONTRACT),
                 "note": "Candidate from tools/whole_character_workflow.py; not part of the v3 atlas review."}
@@ -167,5 +180,13 @@ if __name__ == "__main__":
     parser.add_argument("analysis", type=Path, help="inspection/repair/repaired-analysis.json or inspection/analysis.json")
     parser.add_argument("--fighter", required=True)
     parser.add_argument("--output", type=Path)
+    parser.add_argument("--godot", type=Path, default=DEFAULT_GODOT,
+                        help="Godot binary used to re-import the new textures")
+    parser.add_argument("--no-reimport", action="store_true")
     args = parser.parse_args()
-    print(export(args.analysis, args.fighter, args.output))
+    target = export(args.analysis, args.fighter, args.output)
+    if not args.no_reimport:
+        if not args.godot.exists():
+            parser.error(f"Godot not found at {args.godot}; pass --godot or re-import in the editor")
+        reimport(args.godot)
+    print(target)

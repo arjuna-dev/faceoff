@@ -35,6 +35,19 @@ func _run() -> void:
 			check(sprite.texture != null, "every part has its texture")
 	var player: RagdollCharacter = main.player
 	var skin = player.skeleton_skin
+	# At rest every part sits exactly where it was drawn, and each imported
+	# texture matches its part's rectangle (a stale import would not).
+	player.set_physics_process(false)
+	player.animation_time = 0.0
+	player._solve_pose()
+	var parts: Dictionary = skin.parts
+	var ground := Vector2((parts.left_boot.tip[0] + parts.right_boot.tip[0]) * 0.5, maxf(parts.left_boot.tip[1], parts.right_boot.tip[1]))
+	for name in skin.PART_ORDER:
+		var rect: Array = parts[name].rect
+		var sprite: Sprite2D = skin.sprites[name]
+		check(sprite.texture.get_size() == Vector2(rect[2] - rect[0], rect[3] - rect[1]), name + " texture matches its rectangle")
+		var drawn: Vector2 = player.global_position + (Vector2((rect[0] + rect[2]) * 0.5, (rect[1] + rect[3]) * 0.5) - ground) * skin.pixel_scale + Vector2(0, skin.AUTHORED_FOOT_Y)
+		check(sprite.global_position.distance_to(drawn) < 3.0, name + " rests where it was drawn")
 	var staff: Sprite2D = skin.attachment_sprites["held_item"]
 	var hand_limb := String(skin.attachments["held_item"]["parent"])
 	check(staff.get_parent() == skin.bones[hand_limb], "the staff rides on the hand holding it")
