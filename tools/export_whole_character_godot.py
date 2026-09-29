@@ -85,15 +85,19 @@ def export_godot_scene(analysis_path: Path, output_path: Path, project_root: Pat
                       f'position = {vector(*delta)}',
                       f'rest = Transform2D(1, 0, 0, 1, {number(delta[0])}, {number(delta[1])})',
                       'auto_calculate_length_and_angle = false',
-                      f'length = {number(length)}', 'bone_angle = 0.0', ""])
+                      f'length = {number(length)}', 'bone_angle = 0.0',
+                      # Clicking a part in the editor selects its bone, which turns around the pivot.
+                      'metadata/_edit_group_ = true', ""])
         part = report["parts"][name]
         origin = part["crop_origin"]
         size = part["crop_size"]
         center = [origin[0] + size[0] / 2, origin[1] + size[1] / 2]
         position = [center[0] - anchor[0], center[1] - anchor[1]]
+        # The sprite's origin stays on the pivot and the image is shifted with
+        # offset, so rotating the sprite itself also turns around the joint.
         lines.extend([f'[node name="{name.title().replace("_", "")}Sprite" type="Sprite2D" parent="{path}"]',
                       'texture_filter = 1', f'z_index = {z_index[name]}',
-                      f'position = {vector(*position)}', f'texture = ExtResource("{index}")', ""])
+                      f'offset = {vector(*position)}', f'texture = ExtResource("{index}")', ""])
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text("\n".join(lines), encoding="utf-8")
     return {"scene": str(output_path.resolve()), "kind": "native_inspection_candidate",
