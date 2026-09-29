@@ -37,6 +37,11 @@ func _run() -> void:
 	p.held_targets["right_thigh"] = Vector2(40, -60)
 	p._solve_pose()
 	await _capture("magician-fight-posed")
+	p.return_to_guard()
+	# Rear (far) arm pulled straight forward: it should extend fully.
+	p.held_targets[staff_hand] = Vector2(200, -10)
+	p._solve_pose()
+	await _capture("magician-fight-reach")
 	main._on_fighter_selection_confirmed("magician", "magician")
 	main.player.set_physics_process(false)
 	main.opponent.set_physics_process(false)

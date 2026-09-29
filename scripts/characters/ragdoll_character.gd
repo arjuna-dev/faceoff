@@ -30,9 +30,6 @@ var selected_limb_index := 0
 var bodies: Dictionary = {}
 var active_drags: Dictionary = {}
 var held_targets: Dictionary = {}
-## Forward extent of a hand at the moment it was grabbed, so grabbing a drawn
-## pose never pulls the hand back to the shared forward limit.
-var grab_forward_extent: Dictionary = {}
 var dragging_limb := ""
 var crouch := 0.0
 var lean := 0.0
@@ -441,11 +438,8 @@ func _solve_pose() -> void:
 		if authored_shoulders and rest.is_empty():
 			hand = control_origin + (hand-control_origin).limit_length(control_reach)
 		elif held_hand and not rest.is_empty():
+			# A drawn character's arms extend fully from their own shoulders.
 			hand = control_origin + (hand-control_origin).limit_length(control_reach)
-			# Equal forward reach: both hands stop at the same forward line,
-			# set by whichever arm reaches less far forward.
-			var forward_limit: float = maxf(skeleton_skin.shared_forward_reach(hip - shoulder), float(grab_forward_extent.get(side, -INF)))
-			hand.x = minf(hand.x, shoulder.x + forward_limit)
 		var upper_length := ARM_UPPER_LENGTH
 		var forearm_length := ARM_FOREARM_LENGTH
 		if skeleton_skin:
@@ -533,9 +527,6 @@ func _start_pointer_drag_at(point: Vector2, id: int = -1) -> void:
 	active_drags[id] = {"limb": limb, "start": point, "target": point, "offset": point - bodies[limb].global_position, "crouch": crouch, "lean": lean, "head_drop": head_drop, "travel": 0.0, "spent": false, "direction": Vector2.ZERO, "last_time": Time.get_ticks_usec(), "stance_height": stance_height, "up_travel": 0.0, "strikes": {}}
 	if limb == "torso":
 		body_stroke.clear()
-	if limb.ends_with("forearm"):
-		var side := "left" if limb.begins_with("left") else "right"
-		grab_forward_extent[side] = float(Vector2(joints[side + "_hand"]).x - Vector2(joints.shoulder).x)
 	dragging_limb = limb
 	limb_selected.emit(self, selected_limb_name())
 

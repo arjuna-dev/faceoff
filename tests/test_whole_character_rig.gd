@@ -63,6 +63,11 @@ func _run() -> void:
 		check(Vector2(player.joints[side + "_hand"]).distance_to(player.joints[side + "_shoulder"]) <= arm_length, side + " hand stays within its arm's reach")
 		player._end_pointer_drag(11)
 		player.return_to_guard()
+	# Near (screen-left, "left" slot) limbs draw in front of the torso, far ones behind.
+	var torso_z: int = skin.bones["torso"].z_index
+	check(skin.bones["left_upper_arm"].z_index > torso_z and skin.bones["left_forearm"].z_index > torso_z, "near arm draws in front of the torso")
+	check(skin.bones["right_upper_arm"].z_index < torso_z and skin.bones["right_forearm"].z_index < torso_z, "far arm draws behind the torso")
+	check(skin.bones["left_thigh"].z_index > skin.bones["right_thigh"].z_index, "near leg draws in front of the far leg")
 	var staff: Sprite2D = skin.attachment_sprites["held_item"]
 	var hand_limb := String(skin.attachments["held_item"]["parent"])
 	check(staff.get_parent() == skin.bones[hand_limb], "the staff rides on the hand holding it")

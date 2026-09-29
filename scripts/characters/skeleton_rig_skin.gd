@@ -25,6 +25,7 @@ var pixel_scale := 1.0
 var coordinate_reference: Dictionary = {}
 var attachments: Dictionary = {}
 var _authored_rest_cache: Dictionary = {}
+var layers: Array = []
 ## Planted feet stand this far above the node origin, like the shared stance.
 const AUTHORED_FOOT_Y := -5.0
 var attachment_sprites: Dictionary = {}
@@ -198,6 +199,7 @@ func configure(style: String, requested_body_type: String = "standard", director
 	body_type = requested_body_type if contract.body_types.has(requested_body_type) else "standard"
 	var profile := _read_json(directory.path_join("profile.json"))
 	parts = profile.get("parts", {})
+	layers = profile.get("layers", [])
 	coordinate_reference = profile.get("coordinate_contract", {})
 	render_mode = profile.get("render_mode", "")
 	pixel_scale = float(profile.get("pixel_scale", 1.0))
@@ -220,7 +222,7 @@ func configure(style: String, requested_body_type: String = "standard", director
 		var source_slot := String(definition.source_slot)
 		var bone := Bone2D.new()
 		bone.name = part_name + "Bone"
-		bone.z_index = int(Z_BY_PART[part_name])
+		bone.z_index = z_for(part_name)
 		bone.z_as_relative = false
 		bone.set_autocalculate_length_and_angle(false)
 		bone.set_bone_angle(0)
@@ -263,7 +265,10 @@ func _add_attachment(attachment_name: String, definition: Dictionary, directory:
 	var center := Vector2((float(rect[0]) + float(rect[2])) * 0.5, (float(rect[1]) + float(rect[3])) * 0.5)
 	basis.origin = basis.basis_xform(center - _vector(parent.pivot))
 	sprite.transform = basis
-	if String(definition.get("layer", "")) == "back":
+	if layers.has(attachment_name):
+		sprite.z_as_relative = false
+		sprite.z_index = layers.find(attachment_name) - layers.find("torso")
+	elif String(definition.get("layer", "")) == "back":
 		sprite.z_as_relative = false
 		sprite.z_index = BACK_ATTACHMENT_Z
 	else:
@@ -311,14 +316,12 @@ func authored_rest() -> Dictionary:
 	_authored_rest_cache = rest
 	return rest
 
-## How far forward of the torso's shoulder point both hands can reach: the
-## smaller of the two arms' forward extents, so front and rear arms match.
-func shared_forward_reach(torso_axis: Vector2) -> float:
-	var reach := INF
-	for side in ["left", "right"]:
-		var length := segment_length(side+"_upper_arm", 0.0) + segment_length(side+"_forearm", 0.0) - 0.1
-		reach = minf(reach, arm_root_offset(side, torso_axis).x + length)
-	return reach
+## Layer of a part. Whole-character rigs carry their own back-to-front order
+## from the workflow, the same one the report's poses use.
+func z_for(part_name: String) -> int:
+	if render_mode == WHOLE_CHARACTER and layers.has(part_name):
+		return layers.find(part_name) - layers.find("torso")
+	return int(Z_BY_PART[part_name])
 
 static func _bend_side(root: Vector2, end: Vector2, middle: Vector2) -> float:
 	var axis := (end - root).normalized()
@@ -513,7 +516,7 @@ func apply_pose(joints: Dictionary, pose: Transform2D, facing: float, pixel_size
 		bone.set_length(axis.length())
 		poses[part_name] = desired
 		var kind := part_name.trim_prefix("left_").trim_prefix("right_")
-		bone.z_index = int(Z_BY_PART[part_name])
+		bone.z_index = z_for(part_name)
 		var fit: Transform2D
 		if preserves_proportions():
 			fit = Transform2D(-source_axis.angle(), Vector2.ZERO).scaled(Vector2.ONE * pixel_scale)

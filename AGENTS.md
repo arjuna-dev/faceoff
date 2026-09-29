@@ -12,6 +12,7 @@
 ## Fighter reach
 
 - Front and rear arms must have the same forward combat reach measured from the torso shoulder axis. Visual depth ordering must not reduce the rear arm's usable range.
+- Exception: whole-character rigs (`render_mode: "whole_character"`) keep their drawn shoulders, so their arms cannot share one forward line without the rear arm folding. Each arm must instead extend fully from its own shoulder; `tests/test_puppet_smoke.gd` checks this.
 - Any change to shoulder offsets, arm roots, or IK reach must exercise both `left_forearm` and `right_forearm` for every active visual style.
 
 ## Fighter asset workflow

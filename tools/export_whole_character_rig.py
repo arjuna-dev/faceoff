@@ -24,11 +24,14 @@ import shutil
 from pathlib import Path
 from typing import Any
 
+import sys
+
 import cv2
 import numpy as np
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "tools"))
 RIG_ROOT = ROOT / "assets/fighters/rigged"
 CONTRACT = RIG_ROOT / "contract.json"
 # Game torso length (shoulders to hips) shared with the preserved-proportion rigs.
@@ -158,10 +161,16 @@ def export(analysis_path: Path, fighter: str, output: Path | None = None) -> Pat
         attachments[name] = {"parent": parent, "rect": rect(metadata), "image": f"{name}.png",
                              # Back accessories sit behind everything; a held item just behind its hand.
                              "layer": "back" if name == "back_accessory" else "behind_parent"}
+    # The workflow's back-to-front order, so the game layers parts like the report.
+    from render_whole_character_poses import draw_order
+    names = {**SLOTS, **{name: name for name in ATTACHMENTS}}
+    layers = [names[name] for name in draw_order(analysis) if name in names
+              and parts.get(name, {}).get("status") == "EXTRACTED"]
     torso_length = float(np.linalg.norm(np.subtract(*axes["torso_pelvis"])))
     profile = {"schema_version": 3, "fighter_id": fighter, "body_type": "standard",
                "render_mode": "whole_character", "pixel_scale": round(TARGET_TORSO_UNITS / torso_length, 6),
                "source_canvas": analysis["canvas"], "parts": profile_parts, "attachments": attachments,
+               "layers": layers,
                "source_analysis": str(analysis_path.resolve().relative_to(ROOT))
                if analysis_path.resolve().is_relative_to(ROOT) else analysis_path.name}
     profile_path = target / "profile.json"

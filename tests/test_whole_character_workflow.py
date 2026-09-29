@@ -290,9 +290,11 @@ class WholeCharacterWorkflowTests(unittest.TestCase):
             thigh = report["parts"]["near_thigh"]
             self.assertEqual(report["joints"]["neck"]["method"], "above the shoulders' midpoint")
             torso_core_top = report["parts"]["torso_pelvis"]["core_crop_origin"][1]
-            self.assertLess(report["parts"]["torso_pelvis"]["crop_origin"][1] + report["parts"]["torso_pelvis"]["crop_size"][1],
-                            thigh["crop_origin"][1] + thigh["crop_size"][1] + 1)
-            self.assertLess(thigh["crop_origin"][1], 211)
+            # Only the part drawn underneath (the torso, below the thigh) extends.
+            self.assertEqual(hip["extended_part"], "torso_pelvis")
+            torso = report["parts"]["torso_pelvis"]
+            self.assertGreater(torso["crop_origin"][1] + torso["crop_size"][1], 211)
+            self.assertEqual(thigh["crop_origin"][1], 211)
             self.assertEqual(torso_core_top, 95)
 
             # Full CLI run on fixtures: isolation, detection, repair stage, assembly and report.

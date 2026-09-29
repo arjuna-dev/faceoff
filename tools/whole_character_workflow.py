@@ -613,11 +613,11 @@ def attach_held_item(parts: dict[str, Any], part_masks: dict[str, np.ndarray]) -
 
 def add_joint_overlaps(parts: dict[str, Any], part_masks: dict[str, np.ndarray], joints: dict[str, Any],
                        source_rgba: np.ndarray, foreground: np.ndarray, part_dir: Path) -> list[dict[str, Any]]:
-    """Let the two parts of each joint share the artwork inside a circle around it.
+    """Extend the lower part of each joint under its neighbor, inside a circle.
 
     Ownership stays exclusive (saved as core images for repair detection), but
-    each exported part also carries its neighbor's pixels near the joint, so a
-    rotation shows overlapping art instead of a hard cut.
+    the part drawn underneath also carries its neighbor's pixels near the joint,
+    so a rotation shows overlapping art instead of a hard cut or a gap.
     """
     height, width = foreground.shape
     grown = {name: mask.copy() for name, mask in part_masks.items()}
@@ -646,12 +646,16 @@ def add_joint_overlaps(parts: dict[str, Any], part_masks: dict[str, np.ndarray],
         twin = by_name.get(("far_" if side == "near" else "near_") + rest) if side in ("near", "far") else None
         if twin:
             item["radius_px"] = max(item["radius_px"], twin["radius_px"])
+    # Only the part drawn underneath extends under its neighbor. The part on top
+    # stays exact, so no copied art is left floating on it when the joint moves.
+    from render_whole_character_poses import DRAW_ORDER
     for item in overlaps:
         first, second = item["connects"]
+        lower = first if DRAW_ORDER.index(first) < DRAW_ORDER.index(second) else second
         cx, cy = item["center"]
         disk = ((xx - cx) ** 2 + (yy - cy) ** 2 <= item["radius_px"] ** 2) & (part_masks[first] | part_masks[second])
-        grown[first] |= disk
-        grown[second] |= disk
+        grown[lower] |= disk
+        item["extended_part"] = lower
         item["shared_pixels"] = int(disk.sum())
     for name, mask in grown.items():
         if parts[name]["status"] != "EXTRACTED":

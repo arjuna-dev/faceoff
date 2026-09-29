@@ -81,6 +81,14 @@ func _run() -> void:
 		for side in ["left", "right"]:
 			p.held_targets[side + "_forearm"] = Vector2(p.ARM_REACH, 0)
 		p._solve_pose()
+		if p.skeleton_skin and p.skeleton_skin.render_mode == "whole_character":
+			# Drawn characters keep their drawn shoulders; each arm must extend
+			# fully from its own shoulder instead of folding at the elbow.
+			for side in ["left", "right"]:
+				var length: float = p.skeleton_skin.segment_length(side + "_upper_arm", 0.0) + p.skeleton_skin.segment_length(side + "_forearm", 0.0)
+				var extension: float = Vector2(p.joints[side + "_hand"]).distance_to(p.joints[side + "_shoulder"])
+				check(extension >= length - 0.5, "%s %s arm extends fully" % [p.profile.display_name, side])
+			continue
 		var left_forward_reach: float = p.joints.left_hand.x - p.joints.shoulder.x
 		var right_forward_reach: float = p.joints.right_hand.x - p.joints.shoulder.x
 		check(is_equal_approx(left_forward_reach, right_forward_reach), "%s rear and front arms have equal forward reach" % p.profile.display_name)
